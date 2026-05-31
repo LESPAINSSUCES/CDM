@@ -204,6 +204,46 @@ nav .tab-link.active { color: var(--gold); border-color: var(--gold); }
   text-align: center;
 }
 .stage-current-banner strong { color: var(--text); }
+
+/* Indices FIFA (néophytes) */
+.fifa-hints-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .65rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: .55rem .75rem;
+  margin-bottom: 1rem;
+  font-size: .78rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.fifa-hints-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  cursor: pointer;
+  color: var(--text);
+  font-size: .78rem;
+  user-select: none;
+}
+.fifa-hints-toggle input { accent-color: var(--gold); width: 1rem; height: 1rem; }
+.team-fifa-rank {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: .58rem;
+  letter-spacing: .04em;
+  color: var(--muted);
+  margin-left: .2rem;
+  vertical-align: middle;
+  opacity: .9;
+}
+.tv-sb-team.is-fifa-favorite .team-fifa-rank { color: var(--gold-light); }
+.tv-sb-team.is-fifa-favorite .tv-sb-name { color: var(--gold-light); }
+
 .send-recap-card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -2075,6 +2115,22 @@ body.grille-remote-locked #player-code-input {
   pointer-events: none;
 }
 #toast.show { transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 520px) {
+  #toast:not(.error) { display: none !important; }
+  #toast.error {
+    display: block !important;
+    top: 3.75rem;
+    bottom: auto;
+    transform: translateX(-50%) translateY(-120%);
+    font-size: .68rem;
+    padding: .55rem 1rem;
+    max-width: calc(100vw - 1.5rem);
+    text-align: center;
+  }
+  #toast.error.show { transform: translateX(-50%) translateY(0); }
+  .stage-current-banner { display: none !important; }
+}
 </style>
 </head>
 <body>
@@ -2199,6 +2255,13 @@ body.grille-remote-locked #player-code-input {
 <div class="container">
   <h2 class="section-title">Phase de Groupes — 72 matchs</h2>
   <div class="stage-lock-banner" id="poules-lock-banner" hidden>🔒 Phase de groupes verrouillée — étape passée ou compétition commencée (consultation seule).</div>
+  <div class="fifa-hints-bar">
+    <label class="fifa-hints-toggle">
+      <input type="checkbox" id="fifa-hints-toggle" checked>
+      <span>Indices FIFA</span>
+    </label>
+    <span>Classement mondial (1 avr. 2026) — plus le <strong style="color:var(--gold-light)">#</strong> est bas, plus l’équipe est favorie.</span>
+  </div>
   <div class="incomplete-banner" id="poules-banner"><div class="dot" id="poules-dot"></div><span id="poules-banner-text">Touchez un chiffre pour chaque équipe (0–4, ou Plus pour 5+)</span></div>
   <div class="progress-bar"><div class="progress-fill" id="poules-progress" style="width:0%"></div></div>
   <div class="progress-label" id="poules-label">0 / 72 matchs remplis</div>
@@ -2453,6 +2516,7 @@ body.grille-remote-locked #player-code-input {
 
 <script src="js/config.js"></script>
 <script src="js/supabase-api.js"></script>
+<script src="js/fifa-rankings.js"></script>
 <script src="js/scoring.js?v=4"></script>
 <script>
 // ─── DATA ────────────────────────────────────────────────────────────────────
@@ -2522,18 +2586,74 @@ function teamFlagImg(name, size) {
   return `<img class="${cls}" src="https://flagcdn.com/w40/${code}.png" alt="" width="${w}" height="${h}" loading="lazy" decoding="async">`;
 }
 
+function fifaHintsEnabled() {
+  try {
+    const raw = localStorage.getItem(FIFA_HINTS_LS);
+    if (raw === null) return true;
+    return raw === '1';
+  } catch (e) {
+    return true;
+  }
+}
+
+function setFifaHintsEnabled(on) {
+  try { localStorage.setItem(FIFA_HINTS_LS, on ? '1' : '0'); } catch (e) { /* ignore */ }
+  refreshAllTeamLabels();
+}
+
 function teamLabelHtml(name, side, size) {
   const flag = teamFlagImg(name, size);
   const label = escapeHtml(name);
-  if (!flag) return label;
-  if (side === 'away') return `<span class="tv-sb-name">${label}</span>${flag}`;
-  return `${flag}<span class="tv-sb-name">${label}</span>`;
+  const rank = fifaHintsEnabled() ? window.CDM_FIFA?.getRank(name) : null;
+  const rankHtml = rank != null
+    ? `<span class="team-fifa-rank" title="${escapeAttr(window.CDM_FIFA_RANKS?.label || 'Classement FIFA')}">#${rank}</span>`
+    : '';
+  if (!flag) return label + rankHtml;
+  if (side === 'away') return `<span class="tv-sb-name">${label}</span>${rankHtml}${flag}`;
+  return `${flag}<span class="tv-sb-name">${label}</span>${rankHtml}`;
+}
+
+function refreshTeamLabelsOnBoard(board) {
+  if (!board) return;
+  const home = board.dataset.home;
+  const away = board.dataset.away;
+  const homeEl = board.querySelector('.tv-sb-team.home');
+  const awayEl = board.querySelector('.tv-sb-team.away');
+  if (homeEl) homeEl.innerHTML = teamLabelHtml(home, 'home', 'md');
+  if (awayEl) awayEl.innerHTML = teamLabelHtml(away, 'away', 'md');
+  applyFifaFavoriteHighlight(board);
+}
+
+function refreshAllTeamLabels() {
+  document.querySelectorAll('.tv-scoreboard').forEach(refreshTeamLabelsOnBoard);
+}
+
+function applyFifaFavoriteHighlight(rootEl) {
+  if (!rootEl) return;
+  const homeTeam = rootEl.querySelector('.tv-sb-team.home');
+  const awayTeam = rootEl.querySelector('.tv-sb-team.away');
+  homeTeam?.classList.remove('is-fifa-favorite');
+  awayTeam?.classList.remove('is-fifa-favorite');
+  if (!fifaHintsEnabled()) return;
+  const rh = window.CDM_FIFA?.getRank(rootEl.dataset.home);
+  const ra = window.CDM_FIFA?.getRank(rootEl.dataset.away);
+  if (rh == null || ra == null || rh === ra) return;
+  if (rh < ra) homeTeam?.classList.add('is-fifa-favorite');
+  else awayTeam?.classList.add('is-fifa-favorite');
+}
+
+function wireFifaHintsToggle() {
+  const el = document.getElementById('fifa-hints-toggle');
+  if (!el) return;
+  el.checked = fifaHintsEnabled();
+  el.addEventListener('change', () => setFifaHintsEnabled(el.checked));
 }
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
 /** vainqueurs cliqués après les seizièmes (clé = numéro de match FIFA) */
 const kosWinners = {};
 const LS_KEY = 'cdm2026_grid';
+const FIFA_HINTS_LS = 'cdm2026_fifa_hints';
 const scoreValues = {};
 const QUICK_SCORES = [0, 1, 2, 3, 4];
 const MORE_SCORES = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
@@ -4103,6 +4223,7 @@ function updateScoreboardEl(rootEl, h, a, winnerHome, winnerAway) {
   const awayTeam = rootEl.querySelector('.tv-sb-team.away');
   if (homeTeam) homeTeam.classList.toggle('is-leading', !!winnerHome);
   if (awayTeam) awayTeam.classList.toggle('is-leading', !!winnerAway);
+  applyFifaFavoriteHighlight(rootEl);
   const card = rootEl.closest('.match-card, .ko-match-card');
   const complete = h !== '' && a !== '';
   const partial = (h !== '' || a !== '') && !complete;
@@ -4346,6 +4467,7 @@ function buildGroups() {
   }
   wireGroupFolds(container);
   wireScorePickers(container);
+  refreshAllTeamLabels();
 }
 
 function getMatchFillStatus(num) {
@@ -5295,6 +5417,7 @@ async function submitGrille() {
 buildGroups();
 populateSelects();
 wireBonusOtherPickers();
+wireFifaHintsToggle();
 initScoreSheet();
 loadState();
 BONUS_PICKER_IDS.forEach(syncBonusOtherVisibility);
