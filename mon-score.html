@@ -227,6 +227,49 @@ function fmtScore(h, a) {
   return h + ' – ' + a;
 }
 
+function formatPouleMatchSub(d, ph, pa, rh, ra) {
+  const hasPred = ph != null && pa != null;
+  if (d.status === 'pending') {
+    return hasPred
+      ? `<small>Prono ${fmtScore(ph, pa)} · Officiel en attente</small>`
+      : '<small>Prono non renseigné · Officiel en attente</small>';
+  }
+  if (d.status === 'no-pred') {
+    return `<small>Prono — · Officiel ${fmtScore(rh, ra)}</small>`;
+  }
+  return `<small>Prono ${fmtScore(ph, pa)} · Officiel ${fmtScore(rh, ra)}</small>`;
+}
+
+function getKoPrediction(participant, m) {
+  const key = 'Match ' + m;
+  const winners = participant.vainqueursTableauEliminationChoisis || {};
+  const predW = winners[m] || winners[key] || winners[String(m)] || '';
+  const predSc = participant.scoresElimination?.[key] || participant.scoresElimination?.[String(m)];
+  const ph = S.parseIntSafe(predSc?.scoreHome);
+  const pa = S.parseIntSafe(predSc?.scoreAway);
+  const win = predW || predSc?.vainqueur || '';
+  const hasPred = !!(win || (ph != null && pa != null)
+    || (predSc?.scoreHome != null && String(predSc.scoreHome).trim() !== '')
+    || (predSc?.scoreAway != null && String(predSc.scoreAway).trim() !== ''));
+  return { predW: win, ph, pa, hasPred };
+}
+
+function hasKoPredictionsInRange(participant, min, max) {
+  for (let m = min; m <= max; m++) {
+    if (getKoPrediction(participant, m).hasPred) return true;
+  }
+  return false;
+}
+
+function formatKoEspionageLine(pred) {
+  if (pred.ph != null && pred.pa != null) {
+    const win = pred.predW ? ` (${pred.predW})` : '';
+    return `Prono ${pred.ph}–${pred.pa}${win} · Officiel en attente`;
+  }
+  if (pred.predW) return `Prono vainqueur : ${pred.predW} · Officiel en attente`;
+  return 'Prono renseigné · Officiel en attente';
+}
+
 function renderGroupSection(gname, matches, predMatchs, realMatchs, openDefault) {
   let groupPts = 0, hits = 0, official = 0;
   const lines = matches.map(([num, home, away]) => {
@@ -242,9 +285,7 @@ function renderGroupSection(gname, matches, predMatchs, realMatchs, openDefault)
     const ra = S.parseIntSafe(real?.scoreAway);
     const hitCls = d.status === 'hit' ? ' pred-hit' : '';
     const badge = d.status === 'hit' ? `<span class="pred-pts-badge">+${d.pts}</span>` : '';
-    const sub = d.status === 'pending'
-      ? '<small>Résultat officiel en attente</small>'
-      : `<small>Prono ${fmtScore(ph, pa)} · Officiel ${fmtScore(rh, ra)}</small>`;
+    const sub = formatPouleMatchSub(d, ph, pa, rh, ra);
     return `<div class="match-line${hitCls}">
       <span class="mid">M${num}</span>
       <div class="teams">${escapeHtml(home)} – ${escapeHtml(away)}${sub}</div>
@@ -291,17 +332,26 @@ function renderFinalesSection(participant, resultats) {
   ];
   let html = '';
   for (const def of ETAPE_KO) {
-    if ((resultats.etapeDebloquee || 0) < def.n) continue;
+    const etape = resultats.etapeDebloquee || 0;
+    if (etape < def.n && !hasKoPredictionsInRange(participant, def.min, def.max)) continue;
     let secPts = 0, lines = '';
     for (let m = def.min; m <= def.max; m++) {
       const d = S.evalKoMatchDetail(participant, m, resultats);
-      if (d.status === 'pending') continue;
+      const pred = getKoPrediction(participant, m);
+      if (d.status === 'pending') {
+        if (!pred.hasPred) continue;
+        lines += `<div class="match-line"><span class="mid">M${m}</span><div class="teams"><small>${escapeHtml(formatKoEspionageLine(pred))}</small></div></div>`;
+        continue;
+      }
       const realW = (resultats.vainqueursTableauElimination || {})['Match ' + m]
         || resultats.vainqueursTableauElimination?.[String(m)] || '—';
       secPts += d.pts;
       const hitCls = d.status === 'hit' ? ' pred-hit' : '';
       const badge = d.status === 'hit' ? `<span class="pred-pts-badge">+${d.pts}${d.kind === 'exact' ? ' exact' : ''}</span>` : '';
-      lines += `<div class="match-line${hitCls}"><span class="mid">M${m}</span><div class="teams">Vainqueur officiel : ${escapeHtml(realW)}</div>${badge}</div>`;
+      const predNote = pred.hasPred
+        ? `<small>Prono ${pred.ph != null && pred.pa != null ? pred.ph + '–' + pred.pa : (pred.predW || '—')} · </small>`
+        : '';
+      lines += `<div class="match-line${hitCls}"><span class="mid">M${m}</span><div class="teams">${predNote}Vainqueur officiel : ${escapeHtml(realW)}</div>${badge}</div>`;
     }
     if (lines) {
       html += `<div class="fold-section" data-fold><div class="fold-head" role="button" tabindex="0"><div><strong>Étape ${def.n} — ${def.title}</strong><div class="fold-meta">+${secPts} pts</div></div><span class="fold-chevron">▼</span></div><div class="fold-body">${lines}</div></div>`;
@@ -374,7 +424,7 @@ function renderParticipant(participant, resultats) {
       </div>
     </div>
     <h2 class="section-title">Phase de groupes</h2>
-    <p style="font-size:.82rem;color:var(--muted);margin:-.35rem 0 .85rem">Vert = bon pronostic (résultat officiel publié).</p>
+    <p style="font-size:.82rem;color:var(--muted);margin:-.35rem 0 .85rem">Vert = bon pronostic · les pronos sont visibles avant publication officielle.</p>
     ${groupsHtml}
     <h2 class="section-title">Phase finale — tableau (étape 2)</h2>
     ${renderTableauSection(participant, resultats) || '<p style="font-size:.82rem;color:var(--muted)">Disponible à partir de l’étape 2 (32 qualifiés officiels).</p>'}

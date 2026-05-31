@@ -1290,20 +1290,6 @@ body.grille-remote-locked #email {
   flex: 1;
   min-width: 12rem;
 }
-.btn-change-account {
-  padding: .45rem .75rem;
-  font-size: .78rem;
-  border-radius: 4px;
-  border: 1px solid rgba(100, 160, 200, 0.35);
-  background: rgba(52, 120, 160, 0.15);
-  color: #c8dce8;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.btn-change-account:hover {
-  border-color: rgba(100, 160, 200, 0.55);
-  background: rgba(52, 120, 160, 0.28);
-}
 body.grille-remote-locked #joueur-code {
   pointer-events: none;
   opacity: .88;
@@ -2096,8 +2082,8 @@ body.grille-remote-locked #player-code-input {
 <header>
   <div class="header-hero">
     <div class="header-brand">
-      <span class="trophy">🏆</span>
-      <h1>CDM<span>2026</span></h1>
+  <span class="trophy">🏆</span>
+  <h1>CDM<span>2026</span></h1>
       <p class="edition-badge"><span class="edition-label">édition</span><span class="edition-name">Pains sucés</span></p>
     </div>
   </div>
@@ -2366,8 +2352,8 @@ body.grille-remote-locked #player-code-input {
       <input type="number" class="bonus-answer" id="b10" min="0" max="32" placeholder="ex: 6">
     </div>
   </div>
-</div>
-</div>
+    </div>
+  </div>
 
 <!-- ═══════════════════════════════════════ ENVOYER ════════════════════════════════════════ -->
 <div id="tab-envoyer" class="panel">
@@ -2641,6 +2627,9 @@ let remoteGrilleAuth = { exists: false, hasCode: false };
 let grilleOwnerEmail = '';
 let remoteFetchTimer = null;
 let remoteFetchGen = 0;
+let draftCloudTimer = null;
+let draftCloudStatus = 'idle';
+let draftCloudError = '';
 const PLAYER_AUTH_KEY = 'cdm_player_auth';
 const PLAYER_AUTH_TTL = 8 * 60 * 60 * 1000;
 
@@ -3091,7 +3080,7 @@ function updateFinaleStatus() {
       }
     } else {
       if (warnEl) { warnEl.hidden = true; warnEl.innerHTML = ''; }
-      el.className = 'finale-status ok';
+    el.className = 'finale-status ok';
       el.innerHTML = `✓ Poules 72/72 · Tableau 32/32 prêt · Scores finales débloqués jusqu’à l’<strong>étape ${off || '—'}</strong>.`;
     }
   } else {
@@ -3112,11 +3101,11 @@ function syncBanner() {
   if (!b) return;
   if (ok) {
     if (R32_VALIDATION.ok) {
-      b.style.borderColor = 'rgba(39,174,96,0.45)';
-      b.style.background = 'rgba(39,174,96,0.08)';
-      b.style.color = '#6fcf97';
+    b.style.borderColor = 'rgba(39,174,96,0.45)';
+    b.style.background = 'rgba(39,174,96,0.08)';
+    b.style.color = '#6fcf97';
       if (t) t.textContent = 'Grille complète — tableau 32/32 prêt.';
-      if (dot) dot.style.animation = 'none';
+    if (dot) dot.style.animation = 'none';
     } else {
       b.style.borderColor = 'rgba(231,76,60,0.45)';
       b.style.background = 'rgba(231,76,60,0.08)';
@@ -3499,7 +3488,7 @@ function onKoScoreChanged(mid) {
 
 function createOfficialScoreCard(mid, editable, isPast) {
   const [teamA, teamB] = getOfficialMatchTeams(mid);
-  const pick = kosWinners[mid];
+    const pick = kosWinners[mid];
   const h = getScoreRaw(koInputId(mid, 'h'));
   const a = getScoreRaw(koInputId(mid, 'a'));
   const hVal = parseScoreVal(h);
@@ -3819,6 +3808,22 @@ function renderSendRecap() {
     chk(bonusN >= 10, bonusN > 0, `Bonus : ${bonusN}/10`);
   }
 
+  if (window.CDM_SUPABASE?.isConfigured() && email && !remoteGrilleLocked && localDraftHasProgress(email)) {
+    if (draftCloudStatus === 'syncing') {
+      chk(false, true, 'Sauvegarde cloud en cours…');
+    } else if (draftCloudStatus === 'pending') {
+      chk(false, true, 'Brouillon — sauvegarde cloud imminente…');
+    } else if (draftCloudStatus === 'ok') {
+      chk(true, false, 'Brouillon sauvegardé sur le serveur');
+    } else if (draftCloudStatus === 'err') {
+      chk(false, true, 'Sauvegarde cloud échouée — renvoyez ou réessayez');
+    } else if (!prenom || !nom) {
+      chk(false, true, 'Prénom et nom requis pour la sauvegarde cloud');
+    } else if (!remoteGrilleAuth.exists && !validatePlayerCodeFormat(document.getElementById('joueur-code')?.value)) {
+      chk(false, true, 'Code secret requis pour la sauvegarde cloud');
+    }
+  }
+
   listEl.innerHTML = items.join('');
 
   if (attnEl) {
@@ -4077,7 +4082,7 @@ function buildScoreboardHTML(id, home, away, hVal = '', aVal = '') {
       <span class="tv-sb-num tv-sb-home">${formatScoreLabel(hVal)}</span>
       <span class="tv-sb-sep">:</span>
       <span class="tv-sb-num tv-sb-away">${formatScoreLabel(aVal)}</span>
-    </div>
+  </div>
     <span class="tv-sb-team away">${teamLabelHtml(away, 'away', 'md')}</span>
   </div>`;
 }
@@ -4438,9 +4443,9 @@ function updateProgress() {
 function saveState(opts = {}) {
   const scores = { ...scoreValues };
   if (!opts.fromMemoryOnly) {
-    document.querySelectorAll('.score-value').forEach(inp => {
-      if (inp.value !== '') scores[inp.id] = inp.value;
-    });
+  document.querySelectorAll('.score-value').forEach(inp => {
+    if (inp.value !== '') scores[inp.id] = inp.value;
+  });
   }
   Object.assign(scoreValues, scores);
   const state = {
@@ -4474,6 +4479,160 @@ function saveState(opts = {}) {
   }
   renderSendRecap();
   updateNavStepHighlight();
+  scheduleDraftCloudSync();
+}
+
+function localDraftHasProgress(forEmail) {
+  const em = String(forEmail || getEmailFieldNormalized()).trim().toLowerCase();
+  if (!em || getEmailFieldNormalized() !== em) return false;
+  if (Object.values(scoreValues).some(v => v !== '' && v != null)) return true;
+  if (Object.keys(kosWinners).length) return true;
+  if ((etape2.r32 || []).length || (etape2.r16 || []).length || (etape2.qf || []).length
+    || (etape2.sf || []).length || (etape2.finalists || []).length || etape2.winner) return true;
+  if (Object.keys(etape2Pick).length) return true;
+  for (const id of BONUS_PICKER_IDS) {
+    if (getBonusStoredValue(id)) return true;
+  }
+  for (const id of ['b8', 'b9', 'b10']) {
+    if (document.getElementById(id)?.value?.trim()) return true;
+  }
+  return false;
+}
+
+function setDraftCloudStatus(status, errMsg) {
+  draftCloudStatus = status;
+  draftCloudError = errMsg || '';
+  renderSendRecap();
+}
+
+async function resolveGrilleCloudAuth(email, opts = {}) {
+  const em = String(email || '').trim().toLowerCase();
+  const requireVerified = !!opts.requireVerified;
+
+  let authInfo = remoteGrilleAuth;
+  if (requireVerified || !authInfo.exists) {
+    try {
+      authInfo = await CDM_SUPABASE.fetchGrilleAuthInfo(em);
+      remoteGrilleAuth = authInfo;
+    } catch (e) { /* keep cached */ }
+  }
+
+  let authCodeHash = getPlayerAuth(em);
+  let newCodeHash = null;
+
+  if (!authInfo.exists) {
+    const code = document.getElementById('joueur-code')?.value?.trim() || '';
+    if (!validatePlayerCodeFormat(code)) {
+      if (requireVerified) throw new Error('Choisissez un code secret de 4 à 6 chiffres (onglet Inscription / Connexion).');
+      return null;
+    }
+    newCodeHash = await CDM_SUPABASE.sha256(code);
+  } else if (authInfo.hasCode) {
+    if (!authCodeHash) {
+      const code = document.getElementById('player-code-input')?.value?.trim()
+        || document.getElementById('joueur-code')?.value?.trim() || '';
+      if (!validatePlayerCodeFormat(code)) {
+        if (requireVerified) throw new Error('Code secret requis pour modifier votre grille.');
+        return null;
+      }
+      authCodeHash = await CDM_SUPABASE.sha256(code);
+      if (!await CDM_SUPABASE.verifyPlayerCodeHash(em, authCodeHash)) {
+        if (requireVerified) throw new Error('Code secret incorrect.');
+        return null;
+      }
+      if (requireVerified) savePlayerAuth(em, authCodeHash);
+    }
+  } else {
+    authCodeHash = getPlayerAuth(em);
+    if (!authCodeHash) {
+      if (requireVerified) throw new Error('Définissez votre code via la bannière bleue avant d\'envoyer.');
+      return null;
+    }
+    newCodeHash = authCodeHash;
+  }
+
+  return { authCodeHash, newCodeHash, authInfo };
+}
+
+function scheduleDraftCloudSync(immediate) {
+  clearTimeout(draftCloudTimer);
+  if (!window.CDM_SUPABASE?.isConfigured() || remoteGrilleLocked) {
+    setDraftCloudStatus('idle');
+    return;
+  }
+  const email = getEmailFieldNormalized();
+  if (!isLikelyEmail(email) || !localDraftHasProgress(email)) {
+    setDraftCloudStatus('idle');
+    return;
+  }
+  const prenom = document.getElementById('prenom')?.value?.trim() || '';
+  const nom = document.getElementById('nom')?.value?.trim() || '';
+  if (!prenom || !nom) {
+    setDraftCloudStatus('idle');
+    return;
+  }
+  if (immediate) {
+    syncDraftCloud();
+    return;
+  }
+  setDraftCloudStatus('pending');
+  draftCloudTimer = setTimeout(() => syncDraftCloud(), 2500);
+}
+
+async function syncDraftCloud() {
+  draftCloudTimer = null;
+  if (!window.CDM_SUPABASE?.isConfigured() || remoteGrilleLocked) {
+    setDraftCloudStatus('idle');
+    return;
+  }
+  const email = getEmailFieldNormalized();
+  if (!isLikelyEmail(email) || !localDraftHasProgress(email)) {
+    setDraftCloudStatus('idle');
+    return;
+  }
+  const prenom = document.getElementById('prenom')?.value?.trim() || '';
+  const nom = document.getElementById('nom')?.value?.trim() || '';
+  if (!prenom || !nom) {
+    setDraftCloudStatus('idle');
+    return;
+  }
+
+  let auth;
+  try {
+    auth = await resolveGrilleCloudAuth(email);
+  } catch (e) {
+    setDraftCloudStatus('err', e.message);
+    return;
+  }
+  if (!auth) {
+    setDraftCloudStatus('idle');
+    return;
+  }
+
+  let data;
+  try {
+    data = buildGrillePayload();
+  } catch (e) {
+    setDraftCloudStatus('err', e.message);
+    return;
+  }
+
+  setDraftCloudStatus('syncing');
+  try {
+    await CDM_SUPABASE.upsertGrille(data, {
+      authCodeHash: auth.authCodeHash,
+      newCodeHash: auth.newCodeHash,
+    });
+    remoteGrilleAuth = { exists: true, hasCode: true };
+    remoteGrilleLoadedEmail = email;
+    grilleOwnerEmail = email;
+    const hashToSave = auth.authCodeHash || auth.newCodeHash;
+    if (hashToSave) savePlayerAuth(email, hashToSave);
+    setDraftCloudStatus('ok');
+  } catch (e) {
+    setDraftCloudStatus('err', e.message);
+    console.warn('Brouillon cloud:', e);
+  }
 }
 
 function validatePlayerCodeFormat(code) {
@@ -4720,8 +4879,10 @@ async function tryPlayerUnlock() {
     }
     savePlayerAuth(email, codeHash);
     remoteGrilleLoadedEmail = email.toLowerCase();
+    grilleOwnerEmail = email.toLowerCase();
     unlockRemoteGrille();
     document.getElementById('player-code-input').value = '';
+    scheduleDraftCloudSync(true);
   } catch (e) {
     showToast(e.message || 'Impossible de déverrouiller.', true);
   } finally {
@@ -4842,10 +5003,18 @@ async function tryFetchRemoteGrille(email, opts = {}) {
     if (!data) {
       remoteGrilleLocked = false;
       remoteGrilleLoadedEmail = em;
-      resetGrilleForNewAccount(true);
-      syncRemoteGrilleUI();
-      saveState({ fromMemoryOnly: true });
-      if (!opts.silent) showToast('Aucune grille enregistrée pour cet e-mail — vous pouvez créer la vôtre.');
+      grilleOwnerEmail = em;
+      const keepLocal = localDraftHasProgress(em);
+      if (keepLocal) {
+        syncRemoteGrilleUI();
+        scheduleDraftCloudSync(true);
+        if (!opts.silent) showToast('Brouillon local conservé — synchronisation cloud…');
+      } else {
+        resetGrilleForNewAccount(true);
+        syncRemoteGrilleUI();
+        saveState({ fromMemoryOnly: true });
+        if (!opts.silent) showToast('Aucune grille enregistrée pour cet e-mail — vous pouvez créer la vôtre.');
+      }
       return;
     }
     applyGrillePayload(data);
@@ -4904,7 +5073,7 @@ function loadState() {
     Object.entries(state.scores || {}).forEach(([id, val]) => {
       scoreValues[id] = val;
       syncScoreToDom(id);
-      updatePickerUI(id);
+        updatePickerUI(id);
     });
     for (const rows of Object.values(GROUPS)) {
       for (const [num] of rows) updateMatchDisplayScore(num);
@@ -5087,47 +5256,18 @@ async function submitGrille() {
     return;
   }
 
+  let auth;
   try {
-    remoteGrilleAuth = await CDM_SUPABASE.fetchGrilleAuthInfo(email);
-  } catch (e) { /* keep cached */ }
-
-  let authCodeHash = getPlayerAuth(email);
-  let newCodeHash = null;
-
-  if (!remoteGrilleAuth.exists) {
-    const code = document.getElementById('joueur-code')?.value?.trim() || '';
-    if (!validatePlayerCodeFormat(code)) {
-      showToast('Choisissez un code secret de 4 à 6 chiffres (onglet Inscription / Connexion).', true);
-      goToTab('identity');
-      return;
-    }
-    newCodeHash = await CDM_SUPABASE.sha256(code);
-  } else if (remoteGrilleAuth.hasCode) {
-    if (!authCodeHash) {
-      const code = document.getElementById('player-code-input')?.value?.trim()
-        || document.getElementById('joueur-code')?.value?.trim() || '';
-      if (!validatePlayerCodeFormat(code)) {
-        showToast('Code secret requis pour modifier votre grille.', true);
-        lockRemoteGrille(email, true);
-        return;
-      }
-      authCodeHash = await CDM_SUPABASE.sha256(code);
-      if (!await CDM_SUPABASE.verifyPlayerCodeHash(email, authCodeHash)) {
-        showToast('Code secret incorrect.', true);
-        lockRemoteGrille(email, true);
-        return;
-      }
-      savePlayerAuth(email, authCodeHash);
-    }
-  } else {
-    authCodeHash = getPlayerAuth(email);
-    if (!authCodeHash) {
-      showToast('Définissez votre code via la bannière bleue avant d\'envoyer.', true);
+    auth = await resolveGrilleCloudAuth(email, { requireVerified: true });
+  } catch (e) {
+    showToast(e.message, true);
+    if (/code secret requis|incorrect|définissez votre code/i.test(e.message)) {
       lockRemoteGrille(email, true);
-      return;
     }
-    newCodeHash = authCodeHash;
+    if (/choisissez un code/i.test(e.message)) goToTab('identity');
+    return;
   }
+  const { authCodeHash, newCodeHash } = auth;
 
   const prev = btn.textContent;
   btn.disabled = true;
@@ -5138,6 +5278,9 @@ async function submitGrille() {
     remoteGrilleLocked = false;
     remoteGrilleLoadedEmail = email;
     grilleOwnerEmail = email;
+    const hashToSave = authCodeHash || newCodeHash;
+    if (hashToSave) savePlayerAuth(email, hashToSave);
+    setDraftCloudStatus('ok');
     syncRemoteGrilleUI();
     showToast('✅ Grille envoyée — visible au classement');
   } catch (e) {
@@ -5163,7 +5306,10 @@ document.getElementById('player-code-input')?.addEventListener('keydown', e => {
   if (e.key === 'Enter') tryPlayerUnlock();
 });
 document.getElementById('btn-change-code')?.addEventListener('click', tryChangePlayerCode);
-document.getElementById('joueur-code')?.addEventListener('input', renderSendRecap);
+document.getElementById('joueur-code')?.addEventListener('input', () => {
+  renderSendRecap();
+  scheduleDraftCloudSync();
+});
 syncRemoteGrilleUI();
 const initEmail = document.getElementById('email')?.value?.trim();
 if (isLikelyEmail(initEmail)) tryFetchRemoteGrille(initEmail, { silent: true });
