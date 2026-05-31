@@ -3,43 +3,43 @@
     "misAJour": "2026-05-31",
     "note": "Mis à jour via organisateur.html"
   },
-  "etapeDebloquee": 3,
+  "etapeDebloquee": 0,
   "matchs": {
     "Match 1": {
       "home": "Mexique",
       "away": "Afrique du Sud",
-      "scoreHome": "3",
-      "scoreAway": "0"
+      "scoreHome": "",
+      "scoreAway": ""
     },
     "Match 2": {
       "home": "Corée du Sud",
       "away": "Rép. Tchèque",
-      "scoreHome": "2",
-      "scoreAway": "0"
+      "scoreHome": "",
+      "scoreAway": ""
     },
     "Match 25": {
       "home": "Rép. Tchèque",
       "away": "Afrique du Sud",
-      "scoreHome": "2",
-      "scoreAway": "2"
+      "scoreHome": "",
+      "scoreAway": ""
     },
     "Match 28": {
       "home": "Mexique",
       "away": "Corée du Sud",
-      "scoreHome": "1",
-      "scoreAway": "1"
+      "scoreHome": "",
+      "scoreAway": ""
     },
     "Match 53": {
       "home": "Rép. Tchèque",
       "away": "Mexique",
-      "scoreHome": "3",
-      "scoreAway": "9"
+      "scoreHome": "",
+      "scoreAway": ""
     },
     "Match 54": {
       "home": "Afrique du Sud",
       "away": "Corée du Sud",
-      "scoreHome": "3",
-      "scoreAway": "2"
+      "scoreHome": "",
+      "scoreAway": ""
     },
     "Match 3": {
       "home": "Canada",
