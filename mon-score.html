@@ -193,6 +193,7 @@ nav .tab-link.active { color: var(--gold); border-color: var(--gold); }
   <div id="content"><div class="empty">Entrez votre e-mail pour voir le détail de vos points.</div></div>
 </main>
 <script src="js/config.js"></script>
+<script src="js/leagues.js"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/scoring.js?v=5"></script>
 <script>
@@ -486,7 +487,7 @@ async function showScore(email) {
     }
     content.innerHTML = renderParticipant(p, resultats);
     wireFolds(content);
-    history.replaceState(null, '', '?email=' + encodeURIComponent(email));
+    history.replaceState(null, '', CDM_LEAGUE.withLeague('?email=' + encodeURIComponent(email)));
   } catch (e) {
     content.innerHTML = '<div class="err">Erreur : ' + escapeHtml(e.message) + '</div>';
   }
@@ -496,6 +497,16 @@ document.getElementById('lookupForm').addEventListener('submit', e => {
   e.preventDefault();
   showScore(document.getElementById('emailInput').value);
 });
+
+(function applyLeagueHeader() {
+  if (!window.CDM_LEAGUE) return;
+  const lbl = CDM_LEAGUE.label(CDM_LEAGUE.current());
+  const nameEl = document.querySelector('.edition-name');
+  if (nameEl) nameEl.textContent = lbl;
+  document.querySelectorAll('a[href="classement.html"]').forEach(a => {
+    a.href = CDM_LEAGUE.withLeague('classement.html');
+  });
+})();
 
 const initial = prefillEmail();
 if (initial) showScore(initial);

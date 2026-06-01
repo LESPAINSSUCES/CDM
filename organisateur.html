@@ -352,6 +352,7 @@ input[type="number"].score-in { width: 2.8rem; text-align: center; padding: .45r
 </div>
 
 <script src="js/config.js"></script>
+<script src="js/leagues.js"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/seed-demo-grilles.js"></script>
 <script>
@@ -1037,32 +1038,34 @@ async function renderProfils() {
   }
 
   try {
-    const rows = await CDM_SUPABASE.fetchAllGrilles();
+    const rows = await CDM_SUPABASE.fetchAllGrilles({ allLeagues: true });
     if (!rows.length) {
       root.innerHTML = '<p class="profil-empty">Aucune grille en base.</p>';
       return;
     }
+    const leagueLabel = lg => (window.CDM_LEAGUE ? CDM_LEAGUE.label(lg) : (lg || 'pains-suces'));
     root.innerHTML = rows.map(row => {
       const name = [row.prenom, row.nom].filter(Boolean).join(' ') || '—';
       const eq = row.equipe ? ' · ' + row.equipe : '';
       const em = (row.email || '').replace(/"/g, '&quot;');
-      return `<div class="profil-row" data-email="${em}">
+      const lg = (row.league_id || 'pains-suces').replace(/"/g, '&quot;');
+      return `<div class="profil-row" data-email="${em}" data-league="${lg}">
         <div class="meta">
           <strong>${escapeHtml(name)}${escapeHtml(eq)}</strong>
-          <span>${escapeHtml(row.email || '')} · ${formatProfilDate(row.updated_at)}</span>
+          <span>${escapeHtml(row.email || '')} · <span style="color:var(--gold-light)">${escapeHtml(leagueLabel(row.league_id))}</span> · ${formatProfilDate(row.updated_at)}</span>
         </div>
         <div class="profil-actions">
-          <button type="button" class="btn btn-reset-code btn-reset-code-profil" data-email="${em}">Reset code</button>
-          <button type="button" class="btn btn-danger btn-del-profil" data-email="${em}">Supprimer</button>
+          <button type="button" class="btn btn-reset-code btn-reset-code-profil" data-email="${em}" data-league="${lg}">Reset code</button>
+          <button type="button" class="btn btn-danger btn-del-profil" data-email="${em}" data-league="${lg}">Supprimer</button>
         </div>
       </div>`;
     }).join('');
 
     root.querySelectorAll('.btn-del-profil').forEach(btn => {
-      btn.addEventListener('click', () => deleteProfil(btn.dataset.email));
+      btn.addEventListener('click', () => deleteProfil(btn.dataset.email, btn.dataset.league));
     });
     root.querySelectorAll('.btn-reset-code-profil').forEach(btn => {
-      btn.addEventListener('click', () => resetProfilCode(btn.dataset.email));
+      btn.addEventListener('click', () => resetProfilCode(btn.dataset.email, btn.dataset.league));
     });
   } catch (e) {
     root.innerHTML = '';
@@ -1071,10 +1074,11 @@ async function renderProfils() {
   }
 }
 
-async function resetProfilCode(email) {
+async function resetProfilCode(email, league) {
   const em = (email || '').trim().toLowerCase();
+  const lg = (league || 'pains-suces').trim().toLowerCase();
   if (!em) return;
-  if (!confirm('Effacer le code secret de ' + em + ' ?\nLa grille est conservée — le joueur pourra « Définir mon code » à la prochaine connexion.')) return;
+  if (!confirm('Effacer le code secret de ' + em + ' (ligue ' + lg + ') ?\nLa grille est conservée — le joueur pourra « Définir mon code » à la prochaine connexion.')) return;
 
   const errEl = document.getElementById('profils-err');
   errEl.hidden = true;
@@ -1086,8 +1090,8 @@ async function resetProfilCode(email) {
   }
 
   try {
-    await CDM_SUPABASE.resetPlayerCodeByEmail(em, ORG_PIN_HASH);
-    showMsg('Code effacé : ' + em);
+    await CDM_SUPABASE.resetPlayerCodeByEmail(em, ORG_PIN_HASH, lg);
+    showMsg('Code effacé : ' + em + ' (' + lg + ')');
     await renderProfils();
   } catch (e) {
     errEl.textContent = 'Reset code impossible : ' + (e.message || e)
@@ -1096,10 +1100,11 @@ async function resetProfilCode(email) {
   }
 }
 
-async function deleteProfil(email) {
+async function deleteProfil(email, league) {
   const em = (email || '').trim().toLowerCase();
+  const lg = (league || 'pains-suces').trim().toLowerCase();
   if (!em) return;
-  if (!confirm('Supprimer définitivement la grille de ' + em + ' ?')) return;
+  if (!confirm('Supprimer définitivement la grille de ' + em + ' (ligue ' + lg + ') ?')) return;
 
   const errEl = document.getElementById('profils-err');
   errEl.hidden = true;
@@ -1111,8 +1116,8 @@ async function deleteProfil(email) {
   }
 
   try {
-    await CDM_SUPABASE.deleteGrilleByEmail(em, ORG_PIN_HASH);
-    showMsg('Grille supprimée : ' + em);
+    await CDM_SUPABASE.deleteGrilleByEmail(em, ORG_PIN_HASH, lg);
+    showMsg('Grille supprimée : ' + em + ' (' + lg + ')');
     await renderProfils();
   } catch (e) {
     errEl.textContent = 'Suppression impossible : ' + (e.message || e)

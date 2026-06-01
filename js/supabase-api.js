@@ -22,6 +22,14 @@
     return cfg().supabaseUrl.replace(/\/$/, '');
   }
 
+  function currentLeague() {
+    try {
+      return (window.CDM_LEAGUE && window.CDM_LEAGUE.current()) || 'pains-suces';
+    } catch (e) {
+      return 'pains-suces';
+    }
+  }
+
   async function sha256(text) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(text)));
     return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
@@ -41,7 +49,7 @@
     return data;
   }
 
-  const GRILLE_SELECT = 'email,prenom,nom,equipe,payload,updated_at';
+  const GRILLE_SELECT = 'email,prenom,nom,equipe,payload,updated_at,league_id';
 
   function rowToParticipant(row) {
     return rowToFullGrille(row);
@@ -75,7 +83,7 @@
     const em = String(email || '').trim().toLowerCase();
     if (!em) return { exists: false, hasCode: false };
     try {
-      const data = await rpc('grille_auth_info', { p_email: em });
+      const data = await rpc('grille_auth_info', { p_email: em, p_league_id: currentLeague() });
       return {
         exists: !!data.exists,
         hasCode: !!data.hasCode,
@@ -91,7 +99,7 @@
     const em = String(email || '').trim().toLowerCase();
     if (!em) return false;
     try {
-      return !!await rpc('verify_player_code', { p_email: em, p_code_hash: codeHash });
+      return !!await rpc('verify_player_code', { p_email: em, p_code_hash: codeHash, p_league_id: currentLeague() });
     } catch (e) {
       return false;
     }
@@ -107,7 +115,7 @@
     const em = String(email || '').trim().toLowerCase();
     if (!em) throw new Error('E-mail obligatoire.');
     const codeHash = await sha256(String(codePlain));
-    return rpc('set_player_code_if_empty', { p_email: em, p_code_hash: codeHash });
+    return rpc('set_player_code_if_empty', { p_email: em, p_code_hash: codeHash, p_league_id: currentLeague() });
   }
 
   async function changePlayerCode(email, oldCodePlain, newCodePlain) {
@@ -120,6 +128,7 @@
         p_email: em,
         p_auth_code_hash: await sha256(String(oldCodePlain)),
         p_new_code_hash: await sha256(String(newCodePlain)),
+        p_league_id: currentLeague(),
       });
     } catch (e) {
       if (/function.*does not exist/i.test(e.message || '')) {
@@ -129,7 +138,7 @@
     }
   }
 
-  async function adminGrillesRequest(action, email, pinHash) {
+  async function adminGrillesRequest(action, email, pinHash, league) {
     if (!isConfigured()) throw new Error('Supabase non configuré (js/config.js).');
     const em = String(email || '').trim().toLowerCase();
     if (!em) throw new Error('E-mail obligatoire.');
@@ -144,7 +153,7 @@
         Authorization: 'Bearer ' + c.supabaseAnonKey,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ action, email: em, pinHash }),
+      body: JSON.stringify({ action, email: em, pinHash, league: league || currentLeague() }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -159,6 +168,7 @@
     if (!em) return null;
     const url = baseUrl()
       + '/rest/v1/grilles?email=eq.' + encodeURIComponent(em)
+      + '&league_id=eq.' + encodeURIComponent(currentLeague())
       + '&select=' + encodeURIComponent(GRILLE_SELECT)
       + '&limit=1';
     const res = await fetch(url, { headers: headers() });
@@ -170,10 +180,15 @@
     return rows.length ? rowToFullGrille(rows[0]) : null;
   }
 
-  async function fetchAllGrilles() {
+  async function fetchAllGrilles(opts) {
     if (!isConfigured()) return [];
+    const options = opts || {};
+    const leagueFilter = options.allLeagues
+      ? ''
+      : '&league_id=eq.' + encodeURIComponent(options.league || currentLeague());
     const url = baseUrl()
       + '/rest/v1/grilles?select=' + encodeURIComponent(GRILLE_SELECT)
+      + leagueFilter
       + '&order=updated_at.desc';
     const res = await fetch(url, { headers: headers() });
     if (!res.ok) {
@@ -210,6 +225,7 @@
         p_payload: data,
         p_new_code_hash: newCodeHash || null,
         p_auth_code_hash: authCodeHash || null,
+        p_league_id: options.league || currentLeague(),
       });
     } catch (e) {
       if (/function.*does not exist/i.test(e.message || '')) {
@@ -239,15 +255,19 @@
       }
     }
 
-    try {
-      const fileData = await loadJsonFn('data/participants.json');
-      (fileData.participants || []).forEach(p => {
-        const email = ((p.identite || {}).email || '').trim().toLowerCase();
-        const key = email || ((p.identite?.prenom || '') + '_' + (p.identite?.nom || '')).trim().toLowerCase();
-        if (key && !byKey.has(key)) addParticipant(p);
-      });
-    } catch (e) {
-      /* fichier local optionnel */
+    // Le fichier statique participants.json n'a pas de ligue : on ne le fusionne
+    // que pour la ligue historique (pains-suces) afin de ne pas polluer les autres.
+    if (currentLeague() === 'pains-suces') {
+      try {
+        const fileData = await loadJsonFn('data/participants.json');
+        (fileData.participants || []).forEach(p => {
+          const email = ((p.identite || {}).email || '').trim().toLowerCase();
+          const key = email || ((p.identite?.prenom || '') + '_' + (p.identite?.nom || '')).trim().toLowerCase();
+          if (key && !byKey.has(key)) addParticipant(p);
+        });
+      } catch (e) {
+        /* fichier local optionnel */
+      }
     }
 
     return [...byKey.values()];
@@ -260,12 +280,12 @@
     return baseUrl() + '/functions/v1/admin-grilles';
   }
 
-  async function deleteGrilleByEmail(email, pinHash) {
-    return adminGrillesRequest('delete', email, pinHash);
+  async function deleteGrilleByEmail(email, pinHash, league) {
+    return adminGrillesRequest('delete', email, pinHash, league);
   }
 
-  async function resetPlayerCodeByEmail(email, pinHash) {
-    return adminGrillesRequest('reset_code', email, pinHash);
+  async function resetPlayerCodeByEmail(email, pinHash, league) {
+    return adminGrillesRequest('reset_code', email, pinHash, league);
   }
 
   window.CDM_SUPABASE = {

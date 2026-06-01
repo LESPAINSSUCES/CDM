@@ -205,6 +205,20 @@ nav .tab-link.active { color: var(--gold); border-color: var(--gold); }
 }
 .stage-current-banner strong { color: var(--text); }
 
+.league-badge {
+  text-align: center;
+  font-family: 'DM Mono', monospace;
+  font-size: .7rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  background: rgba(200,168,75,0.07);
+  border-bottom: 1px solid rgba(200,168,75,0.18);
+  padding: .45rem 1rem;
+}
+.league-badge[hidden] { display: none !important; }
+.league-badge strong { color: var(--text); }
+
 /* Indices FIFA (néophytes) */
 .fifa-hints-bar {
   display: flex;
@@ -2146,6 +2160,7 @@ body.grille-remote-locked #player-code-input {
   <div class="badge-deadline">⏱ Date limite : 11 juin 2026</div>
 </header>
 
+<div id="league-badge" class="league-badge" hidden></div>
 <div id="current-step-banner" class="stage-current-banner" hidden></div>
 
 <nav id="tabs">
@@ -2517,6 +2532,7 @@ body.grille-remote-locked #player-code-input {
 <div id="toast">✅ Grille enregistrée !</div>
 
 <script src="js/config.js"></script>
+<script src="js/leagues.js"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/fifa-rankings.js"></script>
 <script src="js/scoring.js?v=5"></script>
@@ -2649,6 +2665,20 @@ function wireFifaHintsToggle() {
   if (!el) return;
   el.checked = fifaHintsEnabled();
   el.addEventListener('change', () => setFifaHintsEnabled(el.checked));
+}
+
+function applyLeagueBadge() {
+  if (!window.CDM_LEAGUE) return;
+  const lg = CDM_LEAGUE.current();
+  const el = document.getElementById('league-badge');
+  if (el) {
+    el.innerHTML = 'Ligue : <strong>' + escapeHtml(CDM_LEAGUE.label(lg)) + '</strong>';
+    el.hidden = false;
+  }
+  document.querySelectorAll('a[href$="classement.html"], a[href$="mon-score.html"], a[href$="guide.html"]').forEach(a => {
+    const base = a.getAttribute('href');
+    if (base) a.setAttribute('href', CDM_LEAGUE.withLeague(base));
+  });
 }
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
@@ -5420,6 +5450,7 @@ buildGroups();
 populateSelects();
 wireBonusOtherPickers();
 wireFifaHintsToggle();
+applyLeagueBadge();
 initScoreSheet();
 loadState();
 BONUS_PICKER_IDS.forEach(syncBonusOtherVisibility);

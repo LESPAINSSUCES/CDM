@@ -35,7 +35,7 @@ serve(async (req) => {
     return json({ error: 'Secrets Supabase manquants (ORGANIZER_PIN_HASH, service role).' }, 500);
   }
 
-  let body: { action?: string; email?: string; pin?: string; pinHash?: string };
+  let body: { action?: string; email?: string; pin?: string; pinHash?: string; league?: string };
   try {
     body = await req.json();
   } catch {
@@ -51,6 +51,7 @@ serve(async (req) => {
   if (!email) {
     return json({ error: 'E-mail obligatoire.' }, 400);
   }
+  const league = String(body.league || 'pains-suces').trim().toLowerCase() || 'pains-suces';
 
   const supabase = createClient(supabaseUrl, serviceKey);
 
@@ -58,15 +59,16 @@ serve(async (req) => {
     const { error, count } = await supabase
       .from('grilles')
       .delete({ count: 'exact' })
-      .eq('email', email);
+      .eq('email', email)
+      .eq('league_id', league);
 
     if (error) {
       return json({ error: error.message }, 500);
     }
     if (!count) {
-      return json({ error: 'Aucune grille trouvée pour cet e-mail.' }, 404);
+      return json({ error: 'Aucune grille trouvée pour cet e-mail dans cette ligue.' }, 404);
     }
-    return json({ ok: true, deleted: count, email });
+    return json({ ok: true, deleted: count, email, league });
   }
 
   if (body.action === 'reset_code') {
@@ -74,15 +76,16 @@ serve(async (req) => {
       .from('grilles')
       .update({ code_hash: null })
       .eq('email', email)
+      .eq('league_id', league)
       .select('email');
 
     if (error) {
       return json({ error: error.message }, 500);
     }
     if (!data?.length) {
-      return json({ error: 'Aucune grille trouvée pour cet e-mail.' }, 404);
+      return json({ error: 'Aucune grille trouvée pour cet e-mail dans cette ligue.' }, 404);
     }
-    return json({ ok: true, reset: true, email });
+    return json({ ok: true, reset: true, email, league });
   }
 
   return json({ error: 'Action inconnue.' }, 400);

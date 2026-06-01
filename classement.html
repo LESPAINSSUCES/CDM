@@ -378,6 +378,7 @@ table.lb tr.lb-row-me .rank { color: var(--gold-light); }
   <p class="err" id="errLine" hidden></p>
 </main>
 <script src="js/config.js"></script>
+<script src="js/leagues.js"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/scoring.js?v=5"></script>
 <script src="js/live-scores.js"></script>
@@ -394,7 +395,7 @@ function renderTable(rows, etape) {
   const normHighlight = normalizeTeam(highlightEmail);
   const trs = rows.map((r, i) => {
     const detail = r.email
-      ? `<a class="lb-link" href="mon-score.html?email=${encodeURIComponent(r.email)}">Détail</a>`
+      ? `<a class="lb-link" href="${CDM_LEAGUE.withLeague('mon-score.html?email=' + encodeURIComponent(r.email))}">Détail</a>`
       : '—';
     const isMe = normHighlight && normalizeTeam(r.email) === normHighlight;
     return `
@@ -437,7 +438,7 @@ function renderMyScoreSummary(rows) {
   }
   const r = rows[idx];
   const detailLink = r.email
-    ? `<a class="lb-link" href="mon-score.html?email=${encodeURIComponent(r.email)}">Détail match par match →</a>`
+    ? `<a class="lb-link" href="${CDM_LEAGUE.withLeague('mon-score.html?email=' + encodeURIComponent(r.email))}">Détail match par match →</a>`
     : '';
   el.innerHTML = `
     <span class="rank-big">#${idx + 1}</span>
@@ -500,7 +501,8 @@ async function refresh() {
     }).sort((a, b) => b.total - a.total || a.label.localeCompare(b.label, 'fr'));
 
     const maj = resultats.meta?.misAJour || 'non renseignée';
-    metaEl.innerHTML = 'Étape officielle : <strong>' + etape + '</strong> · Dernière MAJ : <strong>' + escapeHtml(maj) + '</strong> — '
+    const leagueLabel = window.CDM_LEAGUE ? CDM_LEAGUE.label(CDM_LEAGUE.current()) : 'Pains sucés';
+    metaEl.innerHTML = 'Ligue : <strong>' + escapeHtml(leagueLabel) + '</strong> · Étape officielle : <strong>' + etape + '</strong> · Dernière MAJ : <strong>' + escapeHtml(maj) + '</strong> — '
       + participants.length + ' participant(s). Score progressif (0 = rien · 1 = poules · 2 = tableau · 7 = bonus compétition).';
     content.innerHTML = renderTable(rows, etape);
     renderMyScoreSummary(rows);
@@ -520,6 +522,14 @@ async function refresh() {
 document.getElementById('btnRefresh').addEventListener('click', e => { e.preventDefault(); refresh(); });
 
 highlightEmail = loadStoredEmail();
+
+(function applyLeagueHeader() {
+  if (!window.CDM_LEAGUE) return;
+  const lbl = CDM_LEAGUE.label(CDM_LEAGUE.current());
+  const nameEl = document.querySelector('.edition-name');
+  if (nameEl) nameEl.textContent = lbl;
+  document.title = 'CDM 2026 — Classement ' + lbl;
+})();
 
 if (window.CDM_LIVE_SCORES?.mount) CDM_LIVE_SCORES.mount('live-scores-root');
 
