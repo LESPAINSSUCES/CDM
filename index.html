@@ -2675,6 +2675,8 @@ function applyLeagueBadge() {
     el.innerHTML = 'Ligue : <strong>' + escapeHtml(CDM_LEAGUE.label(lg)) + '</strong>';
     el.hidden = false;
   }
+  const nameEl = document.querySelector('.edition-name');
+  if (nameEl) nameEl.textContent = CDM_LEAGUE.label(lg);
   document.querySelectorAll('a[href$="classement.html"], a[href$="mon-score.html"], a[href$="guide.html"]').forEach(a => {
     const base = a.getAttribute('href');
     if (base) a.setAttribute('href', CDM_LEAGUE.withLeague(base));
