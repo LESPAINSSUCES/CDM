@@ -2156,6 +2156,7 @@ body.grille-remote-locked #player-code-input {
   <button data-tab="bonus">🌟 Bonus</button>
   <button data-tab="envoyer">📤 Envoyer</button>
   <button data-tab="regles">📋 Règlement</button>
+  <a href="guide.html" class="tab-link">❓ Comment jouer</a>
   <a href="classement.html" class="tab-link">🏆 Classement</a>
 </nav>
 
@@ -2240,7 +2241,7 @@ body.grille-remote-locked #player-code-input {
       <li>Pronostiquer les <strong style="color:var(--text)">72 matchs de groupes</strong> (étape 1 · avant le 11/06)</li>
       <li><strong style="color:var(--text)">Phase finale — tableau</strong> : choisir les équipes 32→1 (étape 2 · avant le 11/06)</li>
       <li><strong style="color:var(--text)">Phase finale — scores</strong> : saisir les scores tour par tour (étapes 3–7 · après chaque phase réelle)</li>
-      <li>Répondre à <strong style="color:var(--text)">10 questions bonus</strong> (25 pts chacune)</li>
+      <li>Répondre à <strong style="color:var(--text)">10 questions bonus</strong> (25 pts · prolongations 50 pts)</li>
     </ul>
   </div>
 
@@ -2400,9 +2401,9 @@ body.grille-remote-locked #player-code-input {
       <input type="text" class="bonus-other-input hidden" id="b7-other" maxlength="80" placeholder="Précisez le nom du gardien" autocomplete="off">
     </div>
     <div class="bonus-q">
-      <label>Combien de buts seront marqués ? (±3 buts, prolongations incluses)</label>
+      <label>Combien de buts seront marqués ? (±10 buts, prolongations incluses)</label>
       <span class="pts">25 pts</span>
-      <input type="number" class="bonus-answer" id="b8" min="0" max="300" placeholder="ex: 170">
+      <input type="number" class="bonus-answer" id="b8" min="0" max="300" placeholder="ex: 230">
     </div>
     <div class="bonus-q">
       <label>Nombre total de cartons rouges ?</label>
@@ -2410,8 +2411,8 @@ body.grille-remote-locked #player-code-input {
       <input type="number" class="bonus-answer" id="b9" min="0" max="60" placeholder="ex: 8">
     </div>
     <div class="bonus-q">
-      <label>Combien de prolongations seront disputées ? (min 0 / max 32)</label>
-      <span class="pts">25 pts</span>
+      <label>Combien de prolongations seront disputées ? (score exact · min 0 / max 32)</label>
+      <span class="pts pts-prolong">50 pts</span>
       <input type="number" class="bonus-answer" id="b10" min="0" max="32" placeholder="ex: 6">
     </div>
   </div>
@@ -2495,6 +2496,7 @@ body.grille-remote-locked #player-code-input {
     <div class="rule-section">
       <h3>Questions Bonus</h3>
       <p>10 questions (4 phase de groupe + 6 compétition) · <strong style="color:var(--gold)">25 points</strong> par bonne réponse.</p>
+      <p style="margin-top:.5rem;font-size:.83rem;color:var(--muted)">Exceptions : <strong style="color:var(--text)">Nombre de buts</strong> accepté à <strong style="color:var(--text)">±10</strong> (toujours 25 pts) · <strong style="color:var(--text)">Prolongations</strong> au score exact rapporte <strong style="color:var(--gold)">50 points</strong>.</p>
     </div>
 
     <div style="text-align:center; padding: 1.5rem 0; font-family:'DM Mono',monospace; font-size:.72rem; color:var(--muted)">
@@ -2517,7 +2519,7 @@ body.grille-remote-locked #player-code-input {
 <script src="js/config.js"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/fifa-rankings.js"></script>
-<script src="js/scoring.js?v=4"></script>
+<script src="js/scoring.js?v=5"></script>
 <script>
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const NATIONS = [

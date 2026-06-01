@@ -182,6 +182,7 @@ nav .tab-link.active { color: var(--gold); border-color: var(--gold); }
   <a href="index.html#bonus" class="tab-link">🌟 Bonus</a>
   <a href="index.html#envoyer" class="tab-link">📤 Envoyer</a>
   <a href="index.html#regles" class="tab-link">📋 Règlement</a>
+  <a href="guide.html" class="tab-link">❓ Comment jouer</a>
   <a href="classement.html" class="tab-link">🏆 Classement</a>
 </nav>
 <main class="container">
@@ -193,7 +194,7 @@ nav .tab-link.active { color: var(--gold); border-color: var(--gold); }
 </main>
 <script src="js/config.js"></script>
 <script src="js/supabase-api.js"></script>
-<script src="js/scoring.js?v=4"></script>
+<script src="js/scoring.js?v=5"></script>
 <script>
 const GROUPS = {
   "Groupe A": [[1,"Mexique","Afrique du Sud"],[2,"Corée du Sud","Rép. Tchèque"],[25,"Rép. Tchèque","Afrique du Sud"],[28,"Mexique","Corée du Sud"],[53,"Rép. Tchèque","Mexique"],[54,"Afrique du Sud","Corée du Sud"]],
@@ -377,7 +378,8 @@ function renderBonusSection(participant, resultats) {
     } else if (def.unlock === 'poules' && etape < 2) {
       sub = 'Après la phase de groupes (étape 2)';
     }
-    const ptsLabel = ev.status === 'pending' ? '25 pts' : (ev.status === 'hit' ? '+25' : '0');
+    const maxPts = def.pts ?? 25;
+    const ptsLabel = ev.status === 'pending' ? `${maxPts} pts` : (ev.status === 'hit' ? `+${maxPts}` : '0');
     return `<div class="bonus-line${hitCls}">
       <div><strong>${escapeHtml(def.label)}</strong><br><span style="font-size:.78rem;color:var(--muted)">Votre réponse : ${escapeHtml(String(val || '—'))}${sub ? ' · ' + sub : ''}</span></div>
       <span class="pts-tag${ptsCls ? ' ' + ptsCls : ''}">${ptsLabel}</span>

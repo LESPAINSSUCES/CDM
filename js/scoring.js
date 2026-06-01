@@ -11,17 +11,25 @@
   const KO_MATCH_MAX = 104;
 
   const BONUS_DEFS = [
-    { id: 'b1', key: 'meilleureAttaque', unlock: 'poules', label: 'Meilleure attaque (poules)' },
-    { id: 'b2', key: 'matchs00', unlock: 'poules', label: 'Matchs 0-0 (poules)' },
-    { id: 'b3', key: 'nationsA9pts', unlock: 'poules', label: 'Nations à 9 pts' },
-    { id: 'b4', key: 'nbCSC', unlock: 'poules', label: 'CSC (poules)' },
-    { id: 'b5', key: 'meilleurButeur', unlock: 'competition', label: 'Meilleur buteur' },
-    { id: 'b6', key: 'meilleurJoueur', unlock: 'competition', label: 'Meilleur joueur' },
-    { id: 'b7', key: 'meilleurGardien', unlock: 'competition', label: 'Meilleur gardien' },
-    { id: 'b8', key: 'nbButs', unlock: 'competition', label: 'Nombre de buts (±3)' },
-    { id: 'b9', key: 'nbCartonsRouges', unlock: 'competition', label: 'Cartons rouges' },
-    { id: 'b10', key: 'nbProlongations', unlock: 'competition', label: 'Prolongations' },
+    { id: 'b1', key: 'meilleureAttaque', unlock: 'poules', label: 'Meilleure attaque (poules)', pts: 25 },
+    { id: 'b2', key: 'matchs00', unlock: 'poules', label: 'Matchs 0-0 (poules)', pts: 25 },
+    { id: 'b3', key: 'nationsA9pts', unlock: 'poules', label: 'Nations à 9 pts', pts: 25 },
+    { id: 'b4', key: 'nbCSC', unlock: 'poules', label: 'CSC (poules)', pts: 25 },
+    { id: 'b5', key: 'meilleurButeur', unlock: 'competition', label: 'Meilleur buteur', pts: 25 },
+    { id: 'b6', key: 'meilleurJoueur', unlock: 'competition', label: 'Meilleur joueur', pts: 25 },
+    { id: 'b7', key: 'meilleurGardien', unlock: 'competition', label: 'Meilleur gardien', pts: 25 },
+    { id: 'b8', key: 'nbButs', unlock: 'competition', label: 'Nombre de buts (±10)', pts: 25, tolerance: 10 },
+    { id: 'b9', key: 'nbCartonsRouges', unlock: 'competition', label: 'Cartons rouges', pts: 25 },
+    { id: 'b10', key: 'nbProlongations', unlock: 'competition', label: 'Prolongations (exact)', pts: 50 },
   ];
+
+  function bonusDefFor(key) {
+    return BONUS_DEFS.find((d) => d.key === key) || null;
+  }
+
+  function bonusPointsFor(key) {
+    return bonusDefFor(key)?.pts ?? 25;
+  }
 
   const TABLEAU_ROUNDS = [
     { key: 'l32', realKey: 'liste32QualifiesIssuesPoules', altReal: 'equipesQualifiees32Liste', predKey: 'liste32QualifiesIssuesPoules', pts: 3, label: '32 seizièmes' },
@@ -237,20 +245,22 @@
 
   function evalBonusItem(key, predVal, resultats, etapeOverride) {
     if (!isBonusKeyUnlocked(key, resultats, etapeOverride)) return { status: 'pending', pts: 0 };
+    const def = bonusDefFor(key);
+    const maxPts = def?.pts ?? 25;
     const r = String(resultats.bonus?.[key] ?? '').trim();
     const p = String(predVal ?? '').trim();
     if (!p || !r) return { status: 'miss', pts: 0 };
     if (normalizeTeam(p) === 'autre' || normalizeTeam(r) === 'autre') {
       return { status: 'miss', pts: 0 };
     }
-    if (key === 'nbButs') {
+    if (def && def.tolerance != null) {
       const pn = parseIntSafe(p), rn = parseIntSafe(r);
-      if (pn != null && rn != null && Math.abs(pn - rn) <= BONUS_NUMERIC_TOLERANCE) {
-        return { status: 'hit', pts: 25 };
+      if (pn != null && rn != null && Math.abs(pn - rn) <= def.tolerance) {
+        return { status: 'hit', pts: maxPts };
       }
       return { status: 'miss', pts: 0 };
     }
-    return normalizeTeam(p) === normalizeTeam(r) ? { status: 'hit', pts: 25 } : { status: 'miss', pts: 0 };
+    return normalizeTeam(p) === normalizeTeam(r) ? { status: 'hit', pts: maxPts } : { status: 'miss', pts: 0 };
   }
 
   function getParticipantBonus(participant) {
@@ -403,6 +413,7 @@
 
   global.CDM_SCORING = {
     BONUS_DEFS,
+    bonusPointsFor,
     BONUS_COMPETITION_ETAPE,
     POULES_ETAPE,
     TABLEAU_ETAPE,
