@@ -349,6 +349,8 @@ table.lb tr.lb-row-me .rank { color: var(--gold-light); }
   <div class="badge-deadline">⏱ Date limite : 11 juin 2026</div>
 </header>
 
+<div id="league-bar" class="league-bar"></div>
+
 <nav id="tabs">
   <a href="index.html" class="tab-link">👤 Inscription / Connexion</a>
   <a href="index.html#poules" class="tab-link">⚽ Poules</a>
@@ -379,6 +381,7 @@ table.lb tr.lb-row-me .rank { color: var(--gold-light); }
 </main>
 <script src="js/config.js"></script>
 <script src="js/leagues.js"></script>
+<script src="js/league-bar.js"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/scoring.js?v=5"></script>
 <script src="js/live-scores.js"></script>
@@ -523,13 +526,7 @@ document.getElementById('btnRefresh').addEventListener('click', e => { e.prevent
 
 highlightEmail = loadStoredEmail();
 
-(function applyLeagueHeader() {
-  if (!window.CDM_LEAGUE) return;
-  const lbl = CDM_LEAGUE.label(CDM_LEAGUE.current());
-  const nameEl = document.querySelector('.edition-name');
-  if (nameEl) nameEl.textContent = lbl;
-  document.title = 'CDM 2026 — Classement ' + lbl;
-})();
+if (window.CDM_LEAGUE_BAR) CDM_LEAGUE_BAR.mount('league-bar', 'classement.html');
 
 if (window.CDM_LIVE_SCORES?.mount) CDM_LIVE_SCORES.mount('live-scores-root');
 

@@ -120,6 +120,8 @@ nav .tab-link.active { color: var(--gold); border-color: var(--gold); }
   <div class="badge-deadline">⏱ Date limite : 11 juin 2026</div>
 </header>
 
+<div id="league-bar" class="league-bar"></div>
+
 <nav id="tabs">
   <a href="index.html" class="tab-link">👤 Inscription / Connexion</a>
   <a href="index.html#poules" class="tab-link">⚽ Poules</a>
@@ -184,9 +186,9 @@ nav .tab-link.active { color: var(--gold); border-color: var(--gold); }
 
   <div class="guide-card">
     <h2><span class="num">6</span> Votre ligue</h2>
-    <p>Chaque groupe a son <strong>propre classement</strong>. Utilisez le <strong>lien d’invitation</strong> que l’on vous a envoyé : il vous place automatiquement dans la bonne ligue (un petit bandeau « Ligue : … » s’affiche en haut).</p>
-    <p>Les ligues : <strong>Pains sucés</strong>, <strong>Peuple</strong>, <strong>Compet 1</strong>, <strong>Compet 2</strong>.</p>
-    <p>Un même e-mail peut jouer dans <strong>plusieurs ligues</strong> (une grille indépendante par ligue) — il suffit d’ouvrir chaque lien d’invitation.</p>
+    <p>Chaque groupe a son <strong>propre classement</strong>. L’inscription est <strong>fermée</strong> : il faut le <strong>lien WhatsApp</strong> de votre ligue (code d’invitation dans l’URL).</p>
+    <p>Le bandeau en haut indique votre ligue ; vous pouvez changer de ligue uniquement via les boutons si vous avez reçu plusieurs liens.</p>
+    <p>Un même e-mail peut jouer dans <strong>plusieurs ligues</strong> — un lien d’invitation par ligue.</p>
   </div>
 
   <div class="guide-card">
@@ -197,5 +199,10 @@ nav .tab-link.active { color: var(--gold); border-color: var(--gold); }
 
   <p class="foot">Bonne chance · édition Pains sucés</p>
 </main>
+<script src="js/leagues.js"></script>
+<script src="js/league-bar.js"></script>
+<script>
+if (window.CDM_LEAGUE_BAR) CDM_LEAGUE_BAR.mount('league-bar', 'guide.html');
+</script>
 </body>
 </html>

@@ -2160,7 +2160,7 @@ body.grille-remote-locked #player-code-input {
   <div class="badge-deadline">⏱ Date limite : 11 juin 2026</div>
 </header>
 
-<div id="league-badge" class="league-badge" hidden></div>
+<div id="league-bar" class="league-bar"></div>
 <div id="current-step-banner" class="stage-current-banner" hidden></div>
 
 <nav id="tabs">
@@ -2185,6 +2185,7 @@ body.grille-remote-locked #player-code-input {
 
 <!-- ═══════════════════════════════════════ INSCRIPTION / CONNEXION ════════════════════════════════════════ -->
 <div id="tab-identity" class="panel active">
+  <div id="invite-gate" class="invite-gate" hidden></div>
 <div class="container">
   <h2 class="section-title">Inscription / Connexion</h2>
   <p style="font-size:.85rem;color:var(--muted);margin:-.25rem 0 1rem;line-height:1.65">
@@ -2533,6 +2534,7 @@ body.grille-remote-locked #player-code-input {
 
 <script src="js/config.js"></script>
 <script src="js/leagues.js"></script>
+<script src="js/league-bar.js"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/fifa-rankings.js"></script>
 <script src="js/scoring.js?v=5"></script>
@@ -2667,20 +2669,24 @@ function wireFifaHintsToggle() {
   el.addEventListener('change', () => setFifaHintsEnabled(el.checked));
 }
 
-function applyLeagueBadge() {
-  if (!window.CDM_LEAGUE) return;
-  const lg = CDM_LEAGUE.current();
-  const el = document.getElementById('league-badge');
-  if (el) {
-    el.innerHTML = 'Ligue : <strong>' + escapeHtml(CDM_LEAGUE.label(lg)) + '</strong>';
-    el.hidden = false;
+async function refreshInviteGate() {
+  if (!window.CDM_LEAGUE || !window.CDM_LEAGUE_BAR) return;
+  let allowed = CDM_LEAGUE.hasValidInvite();
+  if (!allowed && window.CDM_SUPABASE?.isConfigured) {
+    const em = getEmailFieldNormalized();
+    if (isLikelyEmail(em)) {
+      try {
+        const auth = await CDM_SUPABASE.fetchGrilleAuthInfo(em);
+        allowed = !!auth.exists;
+      } catch (e) { /* ignore */ }
+    }
   }
-  const nameEl = document.querySelector('.edition-name');
-  if (nameEl) nameEl.textContent = CDM_LEAGUE.label(lg);
-  document.querySelectorAll('a[href$="classement.html"], a[href$="mon-score.html"], a[href$="guide.html"]').forEach(a => {
-    const base = a.getAttribute('href');
-    if (base) a.setAttribute('href', CDM_LEAGUE.withLeague(base));
-  });
+  CDM_LEAGUE_BAR.updateInviteGate({ allowed });
+}
+
+function applyLeagueBadge() {
+  if (window.CDM_LEAGUE_BAR) CDM_LEAGUE_BAR.mount('league-bar', 'index.html');
+  refreshInviteGate();
 }
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
@@ -4741,6 +4747,19 @@ async function syncDraftCloud() {
     setDraftCloudStatus('idle');
     return;
   }
+  if (window.CDM_LEAGUE && !CDM_LEAGUE.hasValidInvite()) {
+    const em = getEmailFieldNormalized();
+    if (isLikelyEmail(em)) {
+      const auth = await CDM_SUPABASE.fetchGrilleAuthInfo(em);
+      if (!auth.exists) {
+        setDraftCloudStatus('idle');
+        return;
+      }
+    } else {
+      setDraftCloudStatus('idle');
+      return;
+    }
+  }
   const email = getEmailFieldNormalized();
   if (!isLikelyEmail(email) || !localDraftHasProgress(email)) {
     setDraftCloudStatus('idle');
@@ -5156,6 +5175,7 @@ async function tryFetchRemoteGrille(email, opts = {}) {
     if (isRemoteFetchStale(em, gen)) return;
 
     remoteGrilleAuth = authInfo;
+    refreshInviteGate();
     if (!data) {
       remoteGrilleLocked = false;
       remoteGrilleLoadedEmail = em;
@@ -5281,7 +5301,10 @@ function wireAutoSave() {
   if (emailEl) {
     emailEl.addEventListener('input', scheduleRemoteGrilleFetch);
     emailEl.addEventListener('change', scheduleRemoteGrilleFetch);
-    emailEl.addEventListener('blur', scheduleRemoteGrilleFetch);
+    emailEl.addEventListener('blur', () => {
+      scheduleRemoteGrilleFetch();
+      refreshInviteGate();
+    });
   }
 }
 // ─── POPULATE SELECTS ────────────────────────────────────────────────────────
@@ -5410,6 +5433,15 @@ async function submitGrille() {
   if (!email) {
     showToast('E-mail obligatoire.', true);
     return;
+  }
+  if (window.CDM_LEAGUE && !CDM_LEAGUE.hasValidInvite()) {
+    const authCheck = await CDM_SUPABASE.fetchGrilleAuthInfo(email);
+    if (!authCheck.exists) {
+      showToast('Lien d\'invitation requis pour cette ligue (groupe WhatsApp).', true);
+      refreshInviteGate();
+      goToTab('identity');
+      return;
+    }
   }
 
   let auth;

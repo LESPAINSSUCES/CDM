@@ -217,6 +217,9 @@
     }
 
     try {
+      const inviteCode = options.inviteCode != null
+        ? options.inviteCode
+        : (window.CDM_LEAGUE && CDM_LEAGUE.currentInvite()) || null;
       return await rpc('upsert_grille_player', {
         p_email: email,
         p_prenom: data.identite.prenom.trim(),
@@ -226,6 +229,7 @@
         p_new_code_hash: newCodeHash || null,
         p_auth_code_hash: authCodeHash || null,
         p_league_id: options.league || currentLeague(),
+        p_invite_code: inviteCode,
       });
     } catch (e) {
       if (/function.*does not exist/i.test(e.message || '')) {
