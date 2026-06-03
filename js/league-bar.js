@@ -28,32 +28,6 @@
   margin-top: .35rem;
   color: var(--muted, #8A8880);
 }
-.league-bar-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: .35rem;
-  margin-top: .5rem;
-}
-.league-bar-tabs a {
-  font-family: 'DM Mono', monospace;
-  font-size: .62rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  text-decoration: none;
-  color: var(--muted, #8A8880);
-  border: 1px solid rgba(200,168,75,0.25);
-  border-radius: 3px;
-  padding: .28rem .55rem;
-  transition: color .15s, border-color .15s, background .15s;
-}
-.league-bar-tabs a:hover { color: var(--gold-light, #E4CE8A); border-color: var(--gold, #C8A84B); }
-.league-bar-tabs a.is-active {
-  color: var(--dark, #0A0A0F);
-  background: var(--gold, #C8A84B);
-  border-color: var(--gold, #C8A84B);
-  font-weight: 600;
-}
 .invite-gate {
   margin: 1rem 0 0;
   padding: .85rem 1rem;
@@ -110,20 +84,10 @@ body.league-invite-blocked #tab-identity .identity-card { opacity: 0.45; pointer
     const L = CDM_LEAGUE;
     const cur = L.current();
     const curLabel = L.label(cur);
-    const pageName = (page || 'index.html').split('?')[0].split('#')[0];
-
-    const tabs = Object.keys(L.LEAGUES).map(slug => {
-      const href = pageName === 'index.html'
-        ? L.indexUrl(slug)
-        : L.pageUrl(pageName, slug);
-      const active = slug === cur ? ' is-active' : '';
-      return '<a href="' + escapeHtml(href) + '" class="' + active.trim() + '">' + escapeHtml(L.label(slug)) + '</a>';
-    }).join('');
 
     el.innerHTML =
       '<span class="league-bar-label">Ligue : <strong>' + escapeHtml(curLabel) + '</strong></span>'
-      + '<span class="league-bar-hint">Chaque ligue a son classement · utilisez le lien reçu sur WhatsApp</span>'
-      + '<div class="league-bar-tabs">' + tabs + '</div>';
+      + '<span class="league-bar-hint">Classement et grille propres à ce groupe · lien d’invitation WhatsApp uniquement</span>';
 
     const nameEl = document.querySelector('.edition-name');
     if (nameEl) nameEl.textContent = curLabel;
