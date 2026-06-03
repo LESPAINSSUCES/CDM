@@ -1,5 +1,5 @@
 /**
- * Ligues + codes d'invitation (liens WhatsApp par groupe).
+ * Ligues + codes d'invitation (un lien d'invitation par groupe).
  * ?ligue= dans l'URL ; sans paramètre → pains-suces.
  * ?invite= obligatoire pour une nouvelle inscription (vérif serveur).
  */
@@ -72,9 +72,15 @@
     return LEAGUES[slug]?.label || LEAGUES[DEFAULT].label;
   }
 
+  /** Invite propagée dans les liens seulement si l'utilisateur a déjà le bon code (URL / session). */
+  function inviteToPropagate(slug) {
+    const lg = slug || current();
+    return hasValidInvite(lg) ? currentInvite() : '';
+  }
+
   function pageQuery(slug, invite) {
     const lg = slug || current();
-    const inv = invite != null && invite !== '' ? invite : inviteFor(lg);
+    const inv = invite !== undefined ? (invite || '') : inviteToPropagate(lg);
     const parts = ['ligue=' + encodeURIComponent(lg)];
     if (inv) parts.push('invite=' + encodeURIComponent(inv));
     return '?' + parts.join('&');
@@ -82,7 +88,7 @@
 
   function withLeague(href, slug) {
     const lg = slug || current();
-    const inv = inviteFor(lg);
+    const inv = inviteToPropagate(lg);
     const hash = (href.indexOf('#') >= 0) ? href.slice(href.indexOf('#')) : '';
     const base = hash ? href.slice(0, href.indexOf('#')) : href;
     const pathOnly = base.split('?')[0].replace(/^\.\//, '') || 'index.html';
@@ -101,12 +107,12 @@
 
   function indexUrl(slug) {
     const lg = slug || current();
-    return 'index.html' + pageQuery(lg, inviteFor(lg));
+    return 'index.html' + pageQuery(lg);
   }
 
   function pageUrl(page, slug) {
     const path = String(page || '').split('?')[0].split('#')[0].replace(/^\.\//, '');
-    return path + pageQuery(slug || current(), inviteFor(slug || current()));
+    return path + pageQuery(slug || current());
   }
 
   global.CDM_LEAGUE = {
@@ -119,6 +125,7 @@
     label,
     isValid,
     normalize,
+    inviteToPropagate,
     withLeague,
     pageQuery,
     pageUrl,

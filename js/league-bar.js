@@ -57,7 +57,7 @@ body.league-invite-blocked #tab-identity .identity-card { opacity: 0.45; pointer
     return noHash.split('?')[0].replace(/^\.\//, '').toLowerCase();
   }
 
-  /** Réécrit tous les liens internes pour garder ligue + invite (ligue courante de la page). */
+  /** Liens internes : garde la ligue ; n'ajoute invite= que si l'utilisateur l'a déjà (lien d'invitation). */
   function wireNavLinks(leagueSlug) {
     if (!global.CDM_LEAGUE) return;
     const L = CDM_LEAGUE;
@@ -71,7 +71,7 @@ body.league-invite-blocked #tab-identity .identity-card { opacity: 0.45; pointer
       if (base === 'index.html') {
         a.setAttribute('href', L.indexUrl(lg) + hash);
       } else {
-        a.setAttribute('href', base + L.pageQuery(lg, L.inviteFor(lg)) + hash);
+        a.setAttribute('href', base + L.pageQuery(lg) + hash);
       }
     });
   }
@@ -87,7 +87,7 @@ body.league-invite-blocked #tab-identity .identity-card { opacity: 0.45; pointer
 
     el.innerHTML =
       '<span class="league-bar-label">Ligue : <strong>' + escapeHtml(curLabel) + '</strong></span>'
-      + '<span class="league-bar-hint">Classement et grille propres à ce groupe · lien d’invitation WhatsApp uniquement</span>';
+      + '<span class="league-bar-hint">Disponible sur invitation seulement</span>';
 
     const nameEl = document.querySelector('.edition-name');
     if (nameEl) nameEl.textContent = curLabel;
@@ -110,9 +110,8 @@ body.league-invite-blocked #tab-identity .identity-card { opacity: 0.45; pointer
     if (show) {
       const lbl = CDM_LEAGUE.label(CDM_LEAGUE.current());
       gate.innerHTML =
-        '<strong>Inscription réservée</strong> — pour rejoindre la ligue <em>' + escapeHtml(lbl) + '</em>, '
-        + 'ouvrez le <strong>lien d’invitation</strong> envoyé par l’organisateur (groupe WhatsApp). '
-        + 'Sans ce lien, vous ne pouvez pas créer de grille ici.';
+        '<strong>Inscription réservée</strong> — la ligue <em>' + escapeHtml(lbl) + '</em> est disponible sur invitation seulement. '
+        + 'Utilisez le lien que l’organisateur vous a communiqué pour créer votre grille.';
     }
   }
 
