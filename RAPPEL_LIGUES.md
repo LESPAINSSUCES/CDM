@@ -6,14 +6,14 @@ Base : `https://lespainssuces.github.io/CDM/`
 
 | Ligue | Lien complet |
 |--------|----------------|
-| **Pains sucés** | https://lespainssuces.github.io/CDM/?ligue=pains-suces&invite=painssuces26 |
-| **Peuple** | https://lespainssuces.github.io/CDM/?ligue=peuple&invite=peuple26 |
-| **Compet 1** | https://lespainssuces.github.io/CDM/?ligue=compet1&invite=compet1-26 |
-| **Compet 2** | https://lespainssuces.github.io/CDM/?ligue=compet2&invite=compet2-26 |
-
-Classement (même ligue) : remplacer `index.html` par `classement.html` et garder `?ligue=…&invite=…`.
-
-Ex. Pains sucés : https://lespainssuces.github.io/CDM/classement.html?ligue=pains-suces&invite=painssuces26
+| **Pains sucés** (grille) | https://lespainssuces.github.io/CDM/?ligue=pains-suces&invite=painssuces26 |
+| **Pains sucés** (classement) | https://lespainssuces.github.io/CDM/classement.html?ligue=pains-suces&invite=painssuces26 |
+| **Peuple** (grille) | https://lespainssuces.github.io/CDM/?ligue=peuple&invite=peuple26 |
+| **Peuple** (classement) | https://lespainssuces.github.io/CDM/classement.html?ligue=peuple&invite=peuple26 |
+| **Compet 1** (grille) | https://lespainssuces.github.io/CDM/?ligue=compet1&invite=compet1-26 |
+| **Compet 1** (classement) | https://lespainssuces.github.io/CDM/classement.html?ligue=compet1&invite=compet1-26 |
+| **Compet 2** (grille) | https://lespainssuces.github.io/CDM/?ligue=compet2&invite=compet2-26 |
+| **Compet 2** (classement) | https://lespainssuces.github.io/CDM/classement.html?ligue=compet2&invite=compet2-26 |
 
 ## Règles
 

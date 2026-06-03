@@ -2533,8 +2533,8 @@ body.grille-remote-locked #player-code-input {
 <div id="toast">✅ Grille enregistrée !</div>
 
 <script src="js/config.js"></script>
-<script src="js/leagues.js"></script>
-<script src="js/league-bar.js"></script>
+<script src="js/leagues.js?v=6"></script>
+<script src="js/league-bar.js?v=6"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/fifa-rankings.js"></script>
 <script src="js/scoring.js?v=5"></script>
@@ -2685,7 +2685,10 @@ async function refreshInviteGate() {
 }
 
 function applyLeagueBadge() {
-  if (window.CDM_LEAGUE_BAR) CDM_LEAGUE_BAR.mount('league-bar', 'index.html');
+  if (window.CDM_LEAGUE_BAR) {
+    CDM_LEAGUE_BAR.mount('league-bar', 'index.html');
+    CDM_LEAGUE_BAR.wireNavLinks();
+  }
   refreshInviteGate();
 }
 

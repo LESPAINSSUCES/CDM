@@ -195,8 +195,8 @@ nav .tab-link.active { color: var(--gold); border-color: var(--gold); }
   <div id="content"><div class="empty">Entrez votre e-mail pour voir le détail de vos points.</div></div>
 </main>
 <script src="js/config.js"></script>
-<script src="js/leagues.js"></script>
-<script src="js/league-bar.js"></script>
+<script src="js/leagues.js?v=6"></script>
+<script src="js/league-bar.js?v=6"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/scoring.js?v=5"></script>
 <script>
@@ -501,7 +501,10 @@ document.getElementById('lookupForm').addEventListener('submit', e => {
   showScore(document.getElementById('emailInput').value);
 });
 
-if (window.CDM_LEAGUE_BAR) CDM_LEAGUE_BAR.mount('league-bar', 'mon-score.html');
+if (window.CDM_LEAGUE_BAR) {
+  CDM_LEAGUE_BAR.mount('league-bar', 'mon-score.html');
+  CDM_LEAGUE_BAR.wireNavLinks();
+}
 
 const initial = prefillEmail();
 if (initial) showScore(initial);

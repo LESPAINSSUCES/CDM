@@ -380,8 +380,8 @@ table.lb tr.lb-row-me .rank { color: var(--gold-light); }
   <p class="err" id="errLine" hidden></p>
 </main>
 <script src="js/config.js"></script>
-<script src="js/leagues.js"></script>
-<script src="js/league-bar.js"></script>
+<script src="js/leagues.js?v=6"></script>
+<script src="js/league-bar.js?v=6"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/scoring.js?v=5"></script>
 <script src="js/live-scores.js"></script>
@@ -390,6 +390,22 @@ const LS_EMAIL_KEY = 'cdm2026_email';
 let highlightEmail = '';
 const formatScoreCell = CDM_SCORING.formatScoreCell || ((v, vis) => (vis ? v : '—'));
 const { scoreParticipant, normalizeTeam } = CDM_SCORING;
+const FETCH_TIMEOUT_MS = 20000;
+
+function monScoreHref(email) {
+  if (!email) return '#';
+  const q = 'mon-score.html?email=' + encodeURIComponent(email);
+  return window.CDM_LEAGUE ? CDM_LEAGUE.withLeague(q) : q;
+}
+
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error((label || 'Chargement') + ' trop long — réessayez.')), ms);
+    }),
+  ]);
+}
 
 function renderTable(rows, etape) {
   if (!rows.length) {
@@ -398,7 +414,7 @@ function renderTable(rows, etape) {
   const normHighlight = normalizeTeam(highlightEmail);
   const trs = rows.map((r, i) => {
     const detail = r.email
-      ? `<a class="lb-link" href="${CDM_LEAGUE.withLeague('mon-score.html?email=' + encodeURIComponent(r.email))}">Détail</a>`
+      ? `<a class="lb-link" href="${monScoreHref(r.email)}">Détail</a>`
       : '—';
     const isMe = normHighlight && normalizeTeam(r.email) === normHighlight;
     return `
@@ -441,7 +457,7 @@ function renderMyScoreSummary(rows) {
   }
   const r = rows[idx];
   const detailLink = r.email
-    ? `<a class="lb-link" href="${CDM_LEAGUE.withLeague('mon-score.html?email=' + encodeURIComponent(r.email))}">Détail match par match →</a>`
+    ? `<a class="lb-link" href="${monScoreHref(r.email)}">Détail match par match →</a>`
     : '';
   el.innerHTML = `
     <span class="rank-big">#${idx + 1}</span>
@@ -488,10 +504,12 @@ async function refresh() {
   const metaEl = document.getElementById('metaLine');
   const content = document.getElementById('content');
   errEl.hidden = true;
+  metaEl.textContent = 'Chargement…';
+  content.innerHTML = '<div class="empty">Chargement du classement…</div>';
   try {
     const [participants, resultats] = await Promise.all([
-      loadParticipants(),
-      loadJson('data/resultats.json'),
+      withTimeout(loadParticipants(), FETCH_TIMEOUT_MS, 'Participants'),
+      withTimeout(loadJson('data/resultats.json'), FETCH_TIMEOUT_MS, 'Résultats'),
     ]);
     const etape = resultats.etapeDebloquee || 0;
     const rows = participants.map(p => {
@@ -522,16 +540,24 @@ async function refresh() {
   }
 }
 
+function bootClassement() {
+  highlightEmail = loadStoredEmail();
+  if (window.CDM_LEAGUE_BAR) {
+    CDM_LEAGUE_BAR.mount('league-bar', 'classement.html');
+    CDM_LEAGUE_BAR.wireNavLinks();
+  }
+  if (window.CDM_LIVE_SCORES?.mount) CDM_LIVE_SCORES.mount('live-scores-root');
+  refresh();
+  setInterval(refresh, 5 * 60 * 1000);
+}
+
 document.getElementById('btnRefresh').addEventListener('click', e => { e.preventDefault(); refresh(); });
 
-highlightEmail = loadStoredEmail();
-
-if (window.CDM_LEAGUE_BAR) CDM_LEAGUE_BAR.mount('league-bar', 'classement.html');
-
-if (window.CDM_LIVE_SCORES?.mount) CDM_LIVE_SCORES.mount('live-scores-root');
-
-refresh();
-setInterval(refresh, 5 * 60 * 1000);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootClassement);
+} else {
+  bootClassement();
+}
 </script>
 </body>
 </html>

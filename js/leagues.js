@@ -1,6 +1,6 @@
 /**
  * Ligues + codes d'invitation (liens WhatsApp par groupe).
- * ?ligue= dans l'URL ; sans paramètre → pains-suces (pas de sessionStorage pour la ligue).
+ * ?ligue= dans l'URL ; sans paramètre → pains-suces.
  * ?invite= obligatoire pour une nouvelle inscription (vérif serveur).
  */
 (function (global) {
@@ -74,31 +74,39 @@
 
   function pageQuery(slug, invite) {
     const lg = slug || current();
-    const inv = invite != null ? invite : inviteFor(lg);
-    const parts = [];
-    if (lg && lg !== DEFAULT) parts.push('ligue=' + encodeURIComponent(lg));
+    const inv = invite != null && invite !== '' ? invite : inviteFor(lg);
+    const parts = ['ligue=' + encodeURIComponent(lg)];
     if (inv) parts.push('invite=' + encodeURIComponent(inv));
-    return parts.length ? '?' + parts.join('&') : '';
+    return '?' + parts.join('&');
   }
 
   function withLeague(href, slug) {
     const lg = slug || current();
     const inv = inviteFor(lg);
-    const q = pageQuery(lg, inv);
-    if (!q) return href;
     const hash = (href.indexOf('#') >= 0) ? href.slice(href.indexOf('#')) : '';
     const base = hash ? href.slice(0, href.indexOf('#')) : href;
-    const sep = base.includes('?') ? '&' : '?';
-    const qq = q.startsWith('?') ? q.slice(1) : q;
-    return base + (base.includes('?') ? '&' + qq : '?' + qq) + hash;
+    const pathOnly = base.split('?')[0].replace(/^\.\//, '') || 'index.html';
+    if (pathOnly === 'index.html') return indexUrl(lg) + hash;
+    const merged = new URLSearchParams();
+    merged.set('ligue', lg);
+    if (inv) merged.set('invite', inv);
+    if (base.includes('?')) {
+      const existing = new URLSearchParams(base.split('?')[1]);
+      existing.forEach((v, k) => {
+        if (k !== 'ligue' && k !== 'invite') merged.set(k, v);
+      });
+    }
+    return pathOnly + '?' + merged.toString() + hash;
   }
 
   function indexUrl(slug) {
     const lg = slug || current();
-    const inv = inviteFor(lg);
-    const parts = ['ligue=' + encodeURIComponent(lg)];
-    if (inv) parts.push('invite=' + encodeURIComponent(inv));
-    return 'index.html?' + parts.join('&');
+    return 'index.html' + pageQuery(lg, inviteFor(lg));
+  }
+
+  function pageUrl(page, slug) {
+    const path = String(page || '').split('?')[0].split('#')[0].replace(/^\.\//, '');
+    return path + pageQuery(slug || current(), inviteFor(slug || current()));
   }
 
   global.CDM_LEAGUE = {
@@ -113,6 +121,7 @@
     normalize,
     withLeague,
     pageQuery,
+    pageUrl,
     indexUrl,
   };
 })(window);

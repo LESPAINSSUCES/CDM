@@ -1,8 +1,9 @@
 /**
- * Bandeau ligue + liens d'invitation (toutes les pages joueur).
+ * Bandeau ligue + correction des liens navigation (classement, mon-score, guide, index).
  */
 (function (global) {
   const STYLE_ID = 'cdm-league-bar-styles';
+  const NAV_PAGES = ['classement.html', 'mon-score.html', 'guide.html', 'index.html'];
 
   function injectStyles() {
     if (document.getElementById(STYLE_ID)) return;
@@ -76,6 +77,31 @@ body.league-invite-blocked #tab-identity .identity-card { opacity: 0.45; pointer
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
+  function pathOnly(href) {
+    if (!href || /^https?:\/\//i.test(href) || href.startsWith('mailto:')) return '';
+    const noHash = href.split('#')[0];
+    return noHash.split('?')[0].replace(/^\.\//, '').toLowerCase();
+  }
+
+  /** Réécrit tous les liens internes pour garder ligue + invite (ligue courante de la page). */
+  function wireNavLinks(leagueSlug) {
+    if (!global.CDM_LEAGUE) return;
+    const L = CDM_LEAGUE;
+    const lg = leagueSlug || L.current();
+
+    document.querySelectorAll('a[href]').forEach(a => {
+      const raw = a.getAttribute('href');
+      const base = pathOnly(raw);
+      if (!base || !NAV_PAGES.includes(base)) return;
+      const hash = raw && raw.includes('#') ? raw.slice(raw.indexOf('#')) : '';
+      if (base === 'index.html') {
+        a.setAttribute('href', L.indexUrl(lg) + hash);
+      } else {
+        a.setAttribute('href', base + L.pageQuery(lg, L.inviteFor(lg)) + hash);
+      }
+    });
+  }
+
   function mount(containerId, page) {
     injectStyles();
     const el = document.getElementById(containerId);
@@ -84,12 +110,12 @@ body.league-invite-blocked #tab-identity .identity-card { opacity: 0.45; pointer
     const L = CDM_LEAGUE;
     const cur = L.current();
     const curLabel = L.label(cur);
-    const pageName = page || 'index.html';
+    const pageName = (page || 'index.html').split('?')[0].split('#')[0];
 
     const tabs = Object.keys(L.LEAGUES).map(slug => {
       const href = pageName === 'index.html'
         ? L.indexUrl(slug)
-        : pageName + L.pageQuery(slug, L.inviteFor(slug));
+        : L.pageUrl(pageName, slug);
       const active = slug === cur ? ' is-active' : '';
       return '<a href="' + escapeHtml(href) + '" class="' + active.trim() + '">' + escapeHtml(L.label(slug)) + '</a>';
     }).join('');
@@ -107,15 +133,7 @@ body.league-invite-blocked #tab-identity .identity-card { opacity: 0.45; pointer
     }
     document.title = document.title.replace(/Pains sucés|Peuple|Compet 1|Compet 2/g, curLabel);
 
-    document.querySelectorAll('a[href$="classement.html"], a[href$="mon-score.html"], a[href$="guide.html"], a[href^="index.html"]').forEach(a => {
-      const raw = a.getAttribute('href');
-      if (!raw || raw.startsWith('http')) return;
-      const base = raw.split('#')[0].split('?')[0];
-      if (['classement.html', 'mon-score.html', 'guide.html', 'index.html'].includes(base) || raw.startsWith('index.html')) {
-        const hash = raw.includes('#') ? raw.slice(raw.indexOf('#')) : '';
-        a.setAttribute('href', L.withLeague(base + hash));
-      }
-    });
+    wireNavLinks(cur);
   }
 
   function updateInviteGate(opts) {
@@ -134,5 +152,15 @@ body.league-invite-blocked #tab-identity .identity-card { opacity: 0.45; pointer
     }
   }
 
-  global.CDM_LEAGUE_BAR = { mount, updateInviteGate, injectStyles };
+  function bootWire() {
+    if (global.CDM_LEAGUE) wireNavLinks();
+  }
+
+  global.CDM_LEAGUE_BAR = { mount, updateInviteGate, injectStyles, wireNavLinks, bootWire };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootWire);
+  } else {
+    bootWire();
+  }
 })(window);
