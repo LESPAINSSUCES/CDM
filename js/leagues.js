@@ -60,22 +60,26 @@
     }
   }
 
+  /** Code invite présent dans l’URL de la page (pas le sessionStorage). */
+  function inviteInUrl(slug) {
+    const lg = slug || current();
+    const fromUrl = readInviteFromUrl();
+    if (!fromUrl) return '';
+    return normalize(fromUrl) === normalize(inviteFor(lg)) ? fromUrl : '';
+  }
+
+  /** Inscription / liens menu : URL uniquement (évite sessionStorage fantôme). */
   function hasValidInvite(league) {
-    const lg = league || current();
-    const expected = inviteFor(lg);
-    if (!expected) return true;
-    const got = normalize(currentInvite());
-    return got === normalize(expected);
+    return !!inviteInUrl(league);
   }
 
   function label(slug) {
     return LEAGUES[slug]?.label || LEAGUES[DEFAULT].label;
   }
 
-  /** Invite propagée dans les liens seulement si l'utilisateur a déjà le bon code (URL / session). */
+  /** Liens internes : n’ajoute invite= que s’il est dans la barre d’adresse. */
   function inviteToPropagate(slug) {
-    const lg = slug || current();
-    return hasValidInvite(lg) ? currentInvite() : '';
+    return inviteInUrl(slug);
   }
 
   function pageQuery(slug, invite) {
@@ -120,6 +124,7 @@
     DEFAULT,
     current,
     currentInvite,
+    inviteInUrl,
     hasValidInvite,
     inviteFor,
     label,
