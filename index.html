@@ -2157,7 +2157,7 @@ body.grille-remote-locked #player-code-input {
       <p class="edition-badge"><span class="edition-label">édition</span><span class="edition-name">Pains sucés</span></p>
     </div>
   </div>
-  <div class="badge-deadline">⏱ Date limite : 11 juin 2026</div>
+  <div class="badge-deadline">⏱ Poules &amp; tableau : ouverts jusqu’à publication organisateur (étapes 1 &amp; 2)</div>
 </header>
 
 <div id="league-bar" class="league-bar"></div>
@@ -2252,10 +2252,10 @@ body.grille-remote-locked #player-code-input {
 
   <div class="rule-section" style="font-size:.88rem; color:var(--muted)">
     <h3>Comment ça marche ?</h3>
-    <p style="margin-bottom:.5rem">Ce concours se joue en <strong style="color:var(--text)">7 étapes</strong> du 11 juin au 18 juillet 2026.</p>
+    <p style="margin-bottom:.5rem">Ce concours se joue en <strong style="color:var(--text)">7 étapes</strong> jusqu’au 18 juillet 2026.</p>
     <ul style="list-style:disc; padding-left:1.5rem; line-height:2">
-      <li>Pronostiquer les <strong style="color:var(--text)">72 matchs de groupes</strong> (étape 1 · avant le 11/06)</li>
-      <li><strong style="color:var(--text)">Phase finale — tableau</strong> : choisir les équipes 32→1 (étape 2 · avant le 11/06)</li>
+      <li>Pronostiquer les <strong style="color:var(--text)">72 matchs de groupes</strong> (étape 1 · jusqu’à verrou organisateur)</li>
+      <li><strong style="color:var(--text)">Phase finale — tableau</strong> : choisir les équipes 32→1 (étape 2 · jusqu’à verrou organisateur)</li>
       <li><strong style="color:var(--text)">Phase finale — scores</strong> : saisir les scores tour par tour (étapes 3–7 · après chaque phase réelle)</li>
       <li>Répondre à <strong style="color:var(--text)">10 questions bonus</strong> (25 pts · prolongations 50 pts)</li>
     </ul>
@@ -2271,7 +2271,7 @@ body.grille-remote-locked #player-code-input {
 <div id="tab-poules" class="panel">
 <div class="container">
   <h2 class="section-title">Phase de Groupes — 72 matchs</h2>
-  <div class="stage-lock-banner" id="poules-lock-banner" hidden>🔒 Phase de groupes verrouillée — étape passée ou compétition commencée (consultation seule).</div>
+  <div class="stage-lock-banner" id="poules-lock-banner" hidden>🔒 Phase de groupes verrouillée — l’organisateur a publié l’étape 1 (consultation seule).</div>
   <div class="fifa-hints-bar">
     <label class="fifa-hints-toggle">
       <input type="checkbox" id="fifa-hints-toggle" checked>
@@ -2314,7 +2314,7 @@ body.grille-remote-locked #player-code-input {
   <p class="ladder-hint-note" style="margin-top:-.5rem">Étape 2 · onglet consultable même verrouillé · les bons choix en <strong style="color:#6fcf97">vert</strong> après publication officielle.</p>
   <div id="finale-status" class="finale-status wait"></div>
   <div class="bracket-note" id="bracket-note-dynamic">
-    <strong>Avant le 11/06</strong> (étape 2) : choisissez les équipes du tableau (32 → vainqueur).
+    <strong>Étape 2</strong> : choisissez les équipes du tableau (32 → vainqueur) tant que l’organisateur ne l’a pas verrouillée.
     Les points étape 2 continuent d’être comptés au fil de la CDM via le <a href="classement.html" style="color:var(--gold)">classement</a>.
   </div>
 
@@ -2324,9 +2324,9 @@ body.grille-remote-locked #player-code-input {
   </div>
 
   <div id="tableau-unlocked-content" hidden>
-    <div class="stage-lock-banner" id="etape2-lock-banner" hidden>🔒 Phase finale — tableau verrouillée — étape passée ou compétition commencée (consultation seule).</div>
+    <div class="stage-lock-banner" id="etape2-lock-banner" hidden>🔒 Phase finale — tableau verrouillée — l’organisateur a publié l’étape 2 (consultation seule).</div>
     <div class="etape2-actions">
-      <span class="etape-round-meta" id="etape2-deadline-note">Date limite tableau : 11/06/2026</span>
+      <span class="etape-round-meta" id="etape2-deadline-note">Tableau modifiable tant que l’étape publiée &lt; 2</span>
       <span class="etape-round-meta" id="etape2-progress-note"></span>
     </div>
 
@@ -2367,7 +2367,7 @@ body.grille-remote-locked #player-code-input {
 <div id="tab-bonus" class="panel">
 <div class="container">
   <h2 class="section-title">Questions Bonus</h2>
-  <div class="stage-lock-banner" id="bonus-lock-banner" hidden>🔒 Questions bonus verrouillées — étape passée ou compétition commencée.</div>
+  <div class="stage-lock-banner" id="bonus-lock-banner" hidden>🔒 Questions bonus verrouillées — l’organisateur a publié l’étape 2.</div>
   <p style="font-size:.85rem; color:var(--muted); margin-bottom:1.5rem">Chaque bonne réponse rapporte <strong style="color:var(--gold)">25 points</strong>.</p>
 
   <div class="bonus-card">
@@ -2466,12 +2466,12 @@ body.grille-remote-locked #player-code-input {
 
     <div class="rule-section">
       <h3>Objet du Concours</h3>
-      <p>Le concours «&nbsp;CDM 2026 · édition Pains sucés&nbsp;» est un jeu permettant aux participants de pronostiquer les résultats de la Coupe du Monde 2026. Le classement sera mis à jour quotidiennement du <strong>11/06/2026 au 14/07/2026</strong>.</p>
+      <p>Le concours «&nbsp;CDM 2026 · édition Pains sucés&nbsp;» est un jeu permettant aux participants de pronostiquer les résultats de la Coupe du Monde 2026. Le classement sera mis à jour quotidiennement pendant la compétition (juin–juillet 2026).</p>
     </div>
 
     <div class="rule-section">
       <h3>Étape 1 — Phase de Groupes (72 matchs)</h3>
-      <p style="margin-bottom:.75rem">Pronostiquer le résultat des 72 matchs avant le <strong>11/06/2026</strong>.</p>
+      <p style="margin-bottom:.75rem">Pronostiquer le résultat des 72 matchs — modifiable tant que l’organisateur n’a pas publié l’<strong>étape 1</strong>.</p>
       <table class="points-table">
         <tr><th>Résultat</th><th>Points de base</th></tr>
         <tr><td>Bon pronostic sans score exact</td><td class="pts-val">3 pts</td></tr>
@@ -2482,8 +2482,8 @@ body.grille-remote-locked #player-code-input {
     </div>
 
     <div class="rule-section">
-      <h3>Étape 2 — Tableau Final (avant le 11/06/2026)</h3>
-      <p style="margin-bottom:.75rem;font-size:.85rem;color:var(--muted)">Sélection en cascade : 32 seizièmes → 16 huitièmes → … → vainqueur. Les points continuent d’être comptés au fil de la CDM.</p>
+      <h3>Étape 2 — Tableau Final</h3>
+      <p style="margin-bottom:.75rem;font-size:.85rem;color:var(--muted)">Sélection en cascade : 32 seizièmes → 16 huitièmes → … → vainqueur. Modifiable tant que l’organisateur n’a pas publié l’<strong>étape 2</strong>. Les points continuent d’être comptés au fil de la CDM.</p>
       <table class="points-table">
         <tr><th>Tour</th><th>Points par équipe trouvée</th></tr>
         <tr><td>Seizièmes de finale (32 équipes)</td><td class="pts-val">3 pts</td></tr>
@@ -2763,7 +2763,6 @@ function wireBonusOtherPickers() {
     document.getElementById(id + '-other')?.addEventListener('input', saveState);
   });
 }
-const ETAPE2_DEADLINE = new Date('2026-06-11T23:59:59');
 const ETAPE_KO = [
   { n: 3, title: 'Étape 3 — Seizièmes de finale (16 matchs)', deadline: '28/06/2026', min: 73, max: 88 },
   { n: 4, title: 'Étape 4 — Huitièmes de finale (8 matchs)', deadline: '04/07/2026', min: 89, max: 96 },
@@ -3389,15 +3388,19 @@ function clearAllScoreDom() {
 }
 
 function isPoulesLocked() {
-  return effectiveEtapeDebloquee() >= 1 || new Date() > ETAPE2_DEADLINE;
+  return effectiveEtapeDebloquee() >= 1;
 }
 
 function isEtape2Locked() {
-  return effectiveEtapeDebloquee() >= 2 || new Date() > ETAPE2_DEADLINE;
+  return effectiveEtapeDebloquee() >= 2;
 }
 
 function isBonusLocked() {
-  return effectiveEtapeDebloquee() >= 2 || new Date() > ETAPE2_DEADLINE;
+  return effectiveEtapeDebloquee() >= 2;
+}
+
+function isPreCompPhase() {
+  return effectiveEtapeDebloquee() < 3;
 }
 
 function isOrganizerSessionActive() {
@@ -3881,7 +3884,7 @@ function isEtape2Complete() {
 function getCurrentPlayerStep() {
   const etape = effectiveEtapeDebloquee();
   if (etape >= 3 && etape <= 7) return 'scores-finales';
-  if (new Date() <= ETAPE2_DEADLINE && etape < 3) {
+  if (etape < 3) {
     if (!allPoulesComplete()) return 'poules';
     if (!isEtape2Complete()) return 'tableau';
     if (countBonusFilled() < 10) return 'bonus';
@@ -3893,7 +3896,7 @@ function getCurrentPlayerStep() {
 }
 
 const STEP_BANNER_TEXT = {
-  poules: '📍 C’est ici cette semaine — complétez vos <strong>72 matchs de poules</strong> (avant le 11/06).',
+  poules: '📍 C’est ici — complétez vos <strong>72 matchs de poules</strong> (tant que l’étape 1 n’est pas publiée).',
   tableau: '📍 C’est ici cette semaine — <strong>Phase finale · tableau</strong> : choisissez les équipes jusqu’au vainqueur (étape 2).',
   bonus: '📍 C’est ici cette semaine — répondez aux <strong>questions bonus</strong> (25 pts chacune).',
   envoyer: '📍 C’est ici — vérifiez votre récap et <strong>envoyez votre grille</strong>.',
@@ -3903,7 +3906,7 @@ const STEP_BANNER_TEXT = {
 function updateNavStepHighlight() {
   const current = getCurrentPlayerStep();
   const etape = effectiveEtapeDebloquee();
-  const preComp = new Date() <= ETAPE2_DEADLINE && etape < 3;
+  const preComp = isPreCompPhase();
 
   document.querySelectorAll('#tabs button[data-tab]').forEach(btn => {
     const tab = btn.dataset.tab;
@@ -3939,7 +3942,7 @@ function renderSendRecap() {
   const poulesN = countFilledMatches();
   const et2 = isEtape2Complete();
   const bonusN = countBonusFilled();
-  const preComp = new Date() <= ETAPE2_DEADLINE && effectiveEtapeDebloquee() < 3;
+  const preComp = isPreCompPhase();
 
   if (idLine) {
     idLine.innerHTML = email
@@ -3963,7 +3966,7 @@ function renderSendRecap() {
   }
   if (preComp) {
     chk(poulesN >= 72, poulesN > 0 && poulesN < 72, `Poules : ${poulesN}/72 matchs`);
-    chk(et2, !et2 && poulesN >= 72, et2 ? 'Phase finale — tableau complète (32 → vainqueur)' : 'Phase finale — tableau incomplète (recommandé avant le 11/06)');
+    chk(et2, !et2 && poulesN >= 72, et2 ? 'Phase finale — tableau complète (32 → vainqueur)' : 'Phase finale — tableau incomplète (recommandé avant verrou étape 2)');
     chk(bonusN >= 10, bonusN > 0 && bonusN < 10, `Bonus : ${bonusN}/10 (recommandé, non bloquant)`);
   } else {
     chk(poulesN >= 72, false, `Poules : ${poulesN}/72`);
@@ -3992,8 +3995,8 @@ function renderSendRecap() {
   if (attnEl) {
     const warnings = [];
     if (!email) warnings.push('E-mail manquant — indispensable pour le classement.');
-    if (preComp && poulesN < 72) warnings.push(`Poules incomplètes (${poulesN}/72) — vous pouvez quand même envoyer, mais complétez avant le 11/06.`);
-    if (preComp && !et2) warnings.push('Phase finale — tableau incomplète — recommandé avant la date limite.');
+    if (preComp && poulesN < 72) warnings.push(`Poules incomplètes (${poulesN}/72) — vous pouvez quand même envoyer, mais complétez avant verrou organisateur.`);
+    if (preComp && !et2) warnings.push('Phase finale — tableau incomplète — recommandé avant verrou étape 2.');
     if (preComp && bonusN < 10) warnings.push(`Bonus ${bonusN}/10 — optionnel mais 25 pts par bonne réponse.`);
     if (warnings.length) {
       attnEl.innerHTML = '<strong>Attention</strong> — ' + warnings.join(' ');

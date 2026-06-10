@@ -1,0 +1,53 @@
+CDM 2026 — Liens d'invitation par ligue
+========================================
+Un lien par groupe WhatsApp. Sans ce lien, une nouvelle inscription est refusée.
+Déjà inscrit : mail + code habituel suffisent.
+
+Base du site : https://lespainssuces.github.io/CDM/
+
+
+─── Pains sucés ──────────────────────────────────────────────
+Code invite : painssuces26
+
+Grille (inscription / pronos) :
+https://lespainssuces.github.io/CDM/?ligue=pains-suces&invite=painssuces26
+
+Classement :
+https://lespainssuces.github.io/CDM/classement.html?ligue=pains-suces&invite=painssuces26
+
+
+─── PEUPLE ──────────────────────────────────────────────────
+Code invite : peuple26
+
+Grille :
+https://lespainssuces.github.io/CDM/?ligue=peuple&invite=peuple26
+
+Classement :
+https://lespainssuces.github.io/CDM/classement.html?ligue=peuple&invite=peuple26
+
+
+─── COMPET 1 ────────────────────────────────────────────────
+Code invite : compet1-26
+
+Grille :
+https://lespainssuces.github.io/CDM/?ligue=compet1&invite=compet1-26
+
+Classement :
+https://lespainssuces.github.io/CDM/classement.html?ligue=compet1&invite=compet1-26
+
+
+─── COMPET 2 ────────────────────────────────────────────────
+Code invite : compet2-26
+
+Grille :
+https://lespainssuces.github.io/CDM/?ligue=compet2&invite=compet2-26
+
+Classement :
+https://lespainssuces.github.io/CDM/classement.html?ligue=compet2&invite=compet2-26
+
+
+─── RAPPEL ORGANISATEUR ─────────────────────────────────────
+• Même e-mail peut jouer dans plusieurs ligues = envoyer chaque lien concerné.
+• Guide du jeu : https://lespainssuces.github.io/CDM/guide.html
+  (ajouter ?ligue=…&invite=… comme pour les autres pages si besoin)
+• Doc technique complète : RAPPEL_LIGUES.md (dans le repo)
