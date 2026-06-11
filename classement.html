@@ -335,6 +335,25 @@ table.lb tr.lb-row-me .rank { color: var(--gold-light); }
 .live-scores-foot { margin-top: .65rem; }
 .live-scores-foot a { color: var(--gold); }
 .live-scores-foot code { color: var(--gold); font-size: .72rem; }
+.live-scores-fifa-cta {
+  display: inline-block;
+  margin-bottom: .75rem;
+  padding: .5rem .9rem;
+  background: rgba(200,168,75,0.12);
+  border: 1px solid rgba(200,168,75,0.45);
+  border-radius: 4px;
+  color: var(--gold-light);
+  font-size: .85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.live-scores-fifa-cta:hover { background: rgba(200,168,75,0.22); color: var(--gold); }
+.live-scores-hint { color: #e8a090; font-size: .78rem; margin-bottom: .5rem; }
+.live-scores-meta {
+  font-family: 'DM Mono', monospace;
+  font-size: .62rem;
+  color: var(--muted);
+}
 </style>
 </head>
 <body>
@@ -384,7 +403,7 @@ table.lb tr.lb-row-me .rank { color: var(--gold-light); }
 <script src="js/league-bar.js?v=9"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/scoring.js?v=5"></script>
-<script src="js/live-scores.js"></script>
+<script src="js/live-scores.js?v=10"></script>
 <script>
 const LS_EMAIL_KEY = 'cdm2026_email';
 let highlightEmail = '';

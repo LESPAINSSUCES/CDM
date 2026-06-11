@@ -7,7 +7,7 @@
 window.CDM_CONFIG = {
   supabaseUrl: 'https://qpkiwausbvedzmovfvxe.supabase.co',
   supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwa2l3YXVzYnZlZHptb3ZmdnhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMDY2MDksImV4cCI6MjA5NDg4MjYwOX0.cX8cSXlXMH4jAa1EP72trk-dDypTj9a0yZtAEQqJ-0c',
-  /** Optionnel — URL Edge Function live-scores (défaut : supabaseUrl/functions/v1/live-scores) */
+  /** @deprecated Widget live-scores n’utilise plus Supabase (openfootball + FIFA) */
   // liveScoresUrl: '',
   /** Optionnel — URL Edge Function admin-grilles (défaut : supabaseUrl/functions/v1/admin-grilles) */
   // adminGrillesUrl: '',
