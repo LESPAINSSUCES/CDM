@@ -283,76 +283,150 @@ table.lb tr.lb-row-me td {
 }
 table.lb tr.lb-row-me .rank { color: var(--gold-light); }
 .live-scores-widget {
-  background: var(--card);
+  background: linear-gradient(165deg, rgba(23,23,31,0.98) 0%, rgba(15,15,22,0.98) 100%);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 1rem 1.15rem;
+  border-radius: 8px;
+  padding: 1.1rem 1.25rem 1rem;
   margin-bottom: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
 }
-.live-scores-widget.loading { opacity: .7; }
+.live-scores-widget.has-live {
+  border-color: rgba(231,76,60,0.35);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px rgba(231,76,60,0.08) inset;
+}
+.live-scores-widget.loading { opacity: .75; }
 .live-scores-head {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  align-items: baseline;
-  gap: .5rem;
-  margin-bottom: .75rem;
+  align-items: flex-start;
+  gap: .75rem;
+  margin-bottom: 1rem;
 }
+.live-scores-head-main { display: flex; flex-direction: column; gap: .2rem; }
 .live-scores-title {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.2rem;
-  letter-spacing: .08em;
+  font-size: 1.35rem;
+  letter-spacing: .1em;
   color: var(--gold);
+  line-height: 1;
 }
 .live-scores-updated {
   font-family: 'DM Mono', monospace;
   font-size: .62rem;
   color: var(--muted);
-  letter-spacing: .06em;
+  letter-spacing: .04em;
 }
-.live-scores-list { list-style: none; display: flex; flex-direction: column; gap: .45rem; }
-.live-scores-item {
+.live-scores-fifa-link {
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  text-decoration: none;
+  padding: .4rem .65rem;
+  border: 1px solid rgba(200,168,75,0.35);
+  border-radius: 4px;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
+}
+.live-scores-fifa-link:hover {
+  background: rgba(200,168,75,0.14);
+  color: var(--gold);
+}
+.live-scores-list {
+  list-style: none;
   display: flex;
-  flex-wrap: wrap;
-  gap: .35rem 1rem;
+  flex-direction: column;
+  gap: .65rem;
+}
+.live-scores-card {
+  background: rgba(0,0,0,0.22);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 6px;
+  padding: .65rem .85rem .75rem;
+  transition: border-color .2s;
+}
+.live-scores-card.is-live {
+  border-color: rgba(231,76,60,0.4);
+  background: linear-gradient(135deg, rgba(231,76,60,0.07) 0%, rgba(0,0,0,0.2) 100%);
+}
+.live-scores-card-top {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  padding: .45rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
-  font-size: .88rem;
+  margin-bottom: .55rem;
+  gap: .5rem;
 }
-.live-scores-item.is-live .live-scores-status { color: #e74c3c; }
-.live-scores-status {
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
   font-family: 'DM Mono', monospace;
-  font-size: .68rem;
-  min-width: 4.5rem;
+  font-size: .65rem;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
-.live-scores-teams strong { color: var(--gold); margin: 0 .35rem; }
-.live-scores-msg, .live-scores-foot {
-  font-size: .78rem;
+.live-scores-card.is-live .live-badge { color: #ff8a80; }
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+}
+.live-scores-card.is-live .live-dot {
+  background: #e74c3c;
+  box-shadow: 0 0 8px rgba(231,76,60,0.8);
+  animation: live-pulse 1.4s ease-in-out infinite;
+}
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .55; transform: scale(.85); }
+}
+.live-group {
+  font-family: 'DM Mono', monospace;
+  font-size: .58rem;
+  color: var(--muted);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.live-scores-board {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: .5rem .75rem;
+}
+.live-team {
+  font-size: .92rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+.live-team.home { text-align: right; }
+.live-team.away { text-align: left; }
+.live-score {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.65rem;
+  letter-spacing: .06em;
+  color: var(--gold);
+  line-height: 1;
+  min-width: 3.5rem;
+  text-align: center;
+}
+.live-scores-card:not(.is-live) .live-score {
+  font-size: 1.1rem;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-weight: 500;
+}
+.live-scores-msg {
+  font-size: .82rem;
   color: var(--muted);
   line-height: 1.45;
-}
-.live-scores-foot { margin-top: .65rem; }
-.live-scores-foot a { color: var(--gold); }
-.live-scores-foot code { color: var(--gold); font-size: .72rem; }
-.live-scores-fifa-cta {
-  display: inline-block;
-  margin-bottom: .75rem;
-  padding: .5rem .9rem;
-  background: rgba(200,168,75,0.12);
-  border: 1px solid rgba(200,168,75,0.45);
-  border-radius: 4px;
-  color: var(--gold-light);
-  font-size: .85rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-.live-scores-fifa-cta:hover { background: rgba(200,168,75,0.22); color: var(--gold); }
-.live-scores-hint { color: #e8a090; font-size: .78rem; margin-bottom: .5rem; }
-.live-scores-meta {
-  font-family: 'DM Mono', monospace;
-  font-size: .62rem;
-  color: var(--muted);
+  text-align: center;
+  padding: .5rem 0;
 }
 </style>
 </head>
@@ -403,7 +477,7 @@ table.lb tr.lb-row-me .rank { color: var(--gold-light); }
 <script src="js/league-bar.js?v=9"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/scoring.js?v=5"></script>
-<script src="js/live-scores.js?v=11"></script>
+<script src="js/live-scores.js?v=12"></script>
 <script>
 const LS_EMAIL_KEY = 'cdm2026_email';
 let highlightEmail = '';

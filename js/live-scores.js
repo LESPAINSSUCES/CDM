@@ -204,12 +204,8 @@
     };
   }
 
-  function renderFifaCta() {
-    return `<a class="live-scores-fifa-cta" href="${FIFA_SCORES_URL}" target="_blank" rel="noopener">Scores officiels live · FIFA.com →</a>`;
-  }
-
   function renderWidget(root, payload) {
-    const { items, fetchedAt, source, resultatsMaj, resultats } = payload;
+    const { items, fetchedAt, resultats } = payload;
     const updated = new Date(fetchedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
     const rows = items.map(({ raw, home, away, group }) => {
@@ -217,8 +213,8 @@
       const gh = org ? org.home : raw.goals?.home;
       const ga = org ? org.away : raw.goals?.away;
       const hasScore = gh != null && ga != null && !(gh === 0 && ga === 0 && raw.status?.short === 'NS');
-      const score = hasScore ? { home: gh, away: ga, orga: !!org } : null;
-      const st = org && raw.status?.short !== 'LIVE' ? { text: 'Concours', live: false } : statusLabel(raw);
+      const score = hasScore ? { home: gh, away: ga } : null;
+      const st = statusLabel(raw);
       return { home, away, score, st, group: group || raw.group };
     });
 
@@ -226,35 +222,50 @@
 
     let body;
     if (!rows.length) {
-      body = `<p class="live-scores-msg">Aucun match CDM aujourd’hui.</p>`;
+      body = `<p class="live-scores-msg">Aucun match aujourd’hui.</p>`;
     } else {
       body = `<ul class="live-scores-list">${rows.map((r) => {
-        const scoreTxt = r.score ? `${escapeHtml(String(r.score.home))} – ${escapeHtml(String(r.score.away))}` : 'vs';
-        return `<li class="live-scores-item${r.st.live ? ' is-live' : ''}">
-          <span class="live-scores-status">${r.st.live ? '🔴' : '⚪'} ${escapeHtml(r.st.text)}</span>
-          <span class="live-scores-teams">${escapeHtml(r.home)} <strong>${scoreTxt}</strong> ${escapeHtml(r.away)}</span>
-          ${r.group ? `<span class="live-scores-meta">Groupe ${escapeHtml(r.group)}</span>` : ''}
-          ${r.score?.orga ? '<span class="live-scores-meta">concours</span>' : ''}
+        const scoreTxt = r.score
+          ? `${escapeHtml(String(r.score.home))} – ${escapeHtml(String(r.score.away))}`
+          : 'vs';
+        const badge = r.st.live ? 'En cours' : escapeHtml(r.st.text);
+        const grp = r.group && r.group.length <= 2 ? `Grp ${escapeHtml(r.group)}` : '';
+        return `<li class="live-scores-card${r.st.live ? ' is-live' : ''}">
+          <div class="live-scores-card-top">
+            <span class="live-badge"><span class="live-dot"></span> ${badge}</span>
+            ${grp ? `<span class="live-group">${grp}</span>` : ''}
+          </div>
+          <div class="live-scores-board">
+            <span class="live-team home">${escapeHtml(r.home)}</span>
+            <span class="live-score">${scoreTxt}</span>
+            <span class="live-team away">${escapeHtml(r.away)}</span>
+          </div>
         </li>`;
       }).join('')}</ul>`;
     }
 
+    root.className = 'live-scores-widget' + (hasLive ? ' has-live' : '');
     root.innerHTML = `
       <div class="live-scores-head">
-        <h2 class="live-scores-title">⚽ Scores CDM (info live)</h2>
-        <span class="live-scores-updated">Màj ${escapeHtml(updated)} · ${escapeHtml(source)} · refresh 2 min</span>
+        <div class="live-scores-head-main">
+          <h2 class="live-scores-title">Scores live</h2>
+          <span class="live-scores-updated">Màj ${escapeHtml(updated)}</span>
+        </div>
+        <a class="live-scores-fifa-link" href="${FIFA_SCORES_URL}" target="_blank" rel="noopener">FIFA →</a>
       </div>
-      ${renderFifaCta()}
-      ${hasLive ? '<p class="live-scores-msg live-scores-hint">Match en cours — scores via <a href="https://github.com/rezarahiminia/worldcup2026" target="_blank" rel="noopener">worldcup26</a> (open source).</p>' : ''}
-      ${body}
-      <p class="live-scores-foot">Source gratuite <a href="https://worldcup26.ir/api-docs" target="_blank" rel="noopener">worldcup26.ir</a>${resultatsMaj ? ' · concours : <code>resultats.json</code> (' + escapeHtml(resultatsMaj) + ')' : ''}. Points officiels = organisateur.</p>`;
+      ${body}`;
   }
 
   function renderOffSeason(root) {
+    root.className = 'live-scores-widget';
     root.innerHTML = `
-      <div class="live-scores-head"><h2 class="live-scores-title">⚽ CDM 2026</h2></div>
-      ${renderFifaCta()}
-      <p class="live-scores-msg">Scores live pendant la CDM (juin–juillet 2026).</p>`;
+      <div class="live-scores-head">
+        <div class="live-scores-head-main">
+          <h2 class="live-scores-title">CDM 2026</h2>
+        </div>
+        <a class="live-scores-fifa-link" href="${FIFA_SCORES_URL}" target="_blank" rel="noopener">FIFA →</a>
+      </div>
+      <p class="live-scores-msg">Scores live pendant la compétition.</p>`;
   }
 
   async function refresh(root) {
@@ -264,11 +275,13 @@
       const payload = await fetchFixtures();
       renderWidget(root, payload);
     } catch (e) {
+      root.className = 'live-scores-widget';
       root.innerHTML = `
-        <div class="live-scores-head"><h2 class="live-scores-title">⚽ Scores CDM</h2></div>
-        ${renderFifaCta()}
-        <p class="live-scores-msg">${escapeHtml(e.message)}</p>
-        <p class="live-scores-foot"><a href="${FIFA_SCORES_URL}" target="_blank" rel="noopener">FIFA →</a> · <a href="https://worldcup26.ir/get/games" target="_blank" rel="noopener">API worldcup26</a></p>`;
+        <div class="live-scores-head">
+          <div class="live-scores-head-main"><h2 class="live-scores-title">Scores live</h2></div>
+          <a class="live-scores-fifa-link" href="${FIFA_SCORES_URL}" target="_blank" rel="noopener">FIFA →</a>
+        </div>
+        <p class="live-scores-msg">${escapeHtml(e.message)}</p>`;
     } finally {
       root.classList.remove('loading');
     }
