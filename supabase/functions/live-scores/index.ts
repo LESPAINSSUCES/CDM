@@ -6,6 +6,10 @@ const corsHeaders = {
 };
 
 const WC_LEAGUE = 1; // FIFA World Cup on API-Football
+const WC_SEASON = 2026;
+const LIVE_STATUS = '1H-HT-2H-ET-P-BT-LIVE';
+
+type FixtureRow = { fixture?: { id?: number }; league?: { id?: number } };
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -24,21 +28,7 @@ serve(async (req) => {
   }
 
   try {
-    const today = new Date().toISOString().slice(0, 10);
-    const seasons = ['2026', '2022'];
-    let fixtures: unknown[] = [];
-
-    const liveRes = await apiFetch(key, `fixtures?live=all&league=${WC_LEAGUE}`);
-    fixtures = filterWc(liveRes?.response || []);
-
-    if (!fixtures.length) {
-      for (const season of seasons) {
-        const dayRes = await apiFetch(key, `fixtures?date=${today}&league=${WC_LEAGUE}&season=${season}`);
-        fixtures = filterWc(dayRes?.response || []);
-        if (fixtures.length) break;
-      }
-    }
-
+    const fixtures = await fetchWcFixtures(key);
     return json({ fixtures, fetchedAt, count: fixtures.length });
   } catch (e) {
     return json({
@@ -49,7 +39,64 @@ serve(async (req) => {
   }
 });
 
-function filterWc(list: Array<{ league?: { id?: number } }>) {
+async function fetchWcFixtures(key: string): Promise<FixtureRow[]> {
+  const seen = new Set<number>();
+  const out: FixtureRow[] = [];
+
+  const add = (list: FixtureRow[]) => {
+    for (const f of filterWc(list)) {
+      const id = f.fixture?.id;
+      if (id != null && !seen.has(id)) {
+        seen.add(id);
+        out.push(f);
+      }
+    }
+  };
+
+  // 1. Live CDM — API-Football : live=1 (pas live=all&league=1)
+  const liveRes = await apiFetch(key, `fixtures?live=${WC_LEAGUE}`);
+  add(liveRes?.response || []);
+  if (out.length) return out;
+
+  // 2. Matchs en cours par statut
+  const statusRes = await apiFetch(
+    key,
+    `fixtures?league=${WC_LEAGUE}&season=${WC_SEASON}&status=${LIVE_STATUS}`,
+  );
+  add(statusRes?.response || []);
+  if (out.length) return out;
+
+  // 3. Calendrier du jour (fuseau France + UTC, inclut lendemain pour coups d'envoi tardifs)
+  for (const date of getDateStrings()) {
+    const dayRes = await apiFetch(
+      key,
+      `fixtures?date=${date}&league=${WC_LEAGUE}&season=${WC_SEASON}&timezone=Europe/Paris`,
+    );
+    add(dayRes?.response || []);
+    if (out.length) return out;
+  }
+
+  return out;
+}
+
+function getDateStrings(): string[] {
+  const dates = new Set<string>();
+  const now = new Date();
+
+  dates.add(now.toISOString().slice(0, 10));
+  const tomorrowUtc = new Date(now);
+  tomorrowUtc.setUTCDate(tomorrowUtc.getUTCDate() + 1);
+  dates.add(tomorrowUtc.toISOString().slice(0, 10));
+
+  for (const offsetDays of [0, 1]) {
+    const t = new Date(now.getTime() + offsetDays * 86400000);
+    dates.add(t.toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' }));
+  }
+
+  return [...dates];
+}
+
+function filterWc(list: FixtureRow[]) {
   return list.filter((f) => f.league?.id === WC_LEAGUE);
 }
 
