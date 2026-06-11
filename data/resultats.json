@@ -1,9 +1,9 @@
 {
   "meta": {
-    "misAJour": "2026-05-31",
+    "misAJour": "2026-06-11",
     "note": "Mis à jour via organisateur.html"
   },
-  "etapeDebloquee": 0,
+  "etapeDebloquee": 3,
   "matchs": {
     "Match 1": {
       "home": "Mexique",
