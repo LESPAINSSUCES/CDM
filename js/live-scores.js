@@ -85,11 +85,60 @@
     return '';
   }
 
-  function statusLabel(f) {
+  /** Décalage UTC (heures à ajouter à l'heure locale stade) — CDM 2026 */
+  const STADIUM_UTC_OFFSET = {
+    '1': 6, '2': 6, '3': 6,
+    '4': 5, '5': 5, '6': 5, '7': 4, '8': 4, '9': 4, '10': 4, '11': 4,
+    '12': 4, '13': 7, '14': 4, '15': 7, '16': 7,
+  };
+
+  function parseKickoffUtc(localDate, stadiumId) {
+    if (!localDate) return null;
+    const m = String(localDate).match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{1,2}):(\d{2})/);
+    if (!m) return null;
+    const offset = STADIUM_UTC_OFFSET[String(stadiumId ?? '')] ?? 5;
+    return new Date(Date.UTC(
+      parseInt(m[3], 10),
+      parseInt(m[1], 10) - 1,
+      parseInt(m[2], 10),
+      parseInt(m[4], 10) + offset,
+      parseInt(m[5], 10),
+      0,
+    ));
+  }
+
+  function formatEstimatedMinute(kickoff, now = new Date()) {
+    const wall = Math.floor((now.getTime() - kickoff.getTime()) / 60000);
+    if (wall < 1) return null;
+    if (wall <= 45) return wall + '′';
+    if (wall <= 60) return 'MT';
+    const game = wall - 15;
+    if (game <= 90) return game + '′';
+    return '90+′';
+  }
+
+  function liveMinuteText(f, now = new Date()) {
+    const st = f.status || {};
+    if (typeof st.elapsed === 'number' && st.elapsed >= 0) return st.elapsed + '′';
+    const raw = String(st.elapsedRaw || '').trim().toLowerCase();
+    if (/^\d+$/.test(raw)) return raw + '′';
+    if (raw && raw !== 'live' && raw !== 'notstarted') {
+      const m = raw.match(/(\d+)/);
+      if (m) return m[1] + '′';
+    }
+    const kickoff = f.fixture?.date
+      ? new Date(f.fixture.date)
+      : parseKickoffUtc(f.localDate, f.stadiumId);
+    if (!kickoff || Number.isNaN(kickoff.getTime())) return null;
+    return formatEstimatedMinute(kickoff, now);
+  }
+
+  function statusLabel(f, now = new Date()) {
     const st = f.status || {};
     const short = st.short || '';
     if (short === 'LIVE' || short === '1H' || short === '2H' || short === 'HT' || short === 'ET' || short === 'P') {
-      return { text: st.elapsed != null ? st.elapsed + '′' : 'En cours', live: true };
+      const min = liveMinuteText(f, now);
+      return { text: min ? `En cours · ${min}` : 'En cours', live: true };
     }
     if (short === 'FT' || short === 'AET' || short === 'PEN') return { text: 'Terminé', live: false };
     if (st.long) return { text: st.long, live: false };
@@ -160,8 +209,12 @@
           status: {
             short: live ? 'LIVE' : (finished ? 'FT' : 'NS'),
             long: live ? 'En cours' : (finished ? 'Terminé' : (g.local_date || '').split(' ')[1] || 'À venir'),
+            elapsedRaw: g.time_elapsed,
           },
           group: g.group,
+          localDate: g.local_date,
+          stadiumId: g.stadium_id,
+          fixture: { date: parseKickoffUtc(g.local_date, g.stadium_id)?.toISOString() },
         };
         return { raw, home, away, scorers: g.home_scorers, group: g.group };
       });
@@ -228,7 +281,7 @@
         const scoreTxt = r.score
           ? `${escapeHtml(String(r.score.home))} – ${escapeHtml(String(r.score.away))}`
           : 'vs';
-        const badge = r.st.live ? 'En cours' : escapeHtml(r.st.text);
+        const badge = escapeHtml(r.st.text);
         const grp = r.group && r.group.length <= 2 ? `Grp ${escapeHtml(r.group)}` : '';
         return `<li class="live-scores-card${r.st.live ? ' is-live' : ''}">
           <div class="live-scores-card-top">

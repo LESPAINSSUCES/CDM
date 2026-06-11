@@ -20,6 +20,8 @@ type WcGame = {
   time_elapsed?: string;
   group?: string;
   type?: string;
+  stadium_id?: string;
+  home_scorers?: string;
 };
 
 serve(async (req) => {
@@ -98,7 +100,8 @@ function normalizeGame(g: WcGame) {
   if (elapsed === 'live') short = 'LIVE';
   else if (finished) short = 'FT';
 
-  const kickoff = parseLocalKickoffParis(g.local_date);
+  const kickoff = parseKickoffUtc(g.local_date, g.stadium_id);
+  const elapsedRaw = String(g.time_elapsed || '');
 
   return {
     teams: { home: { name: home }, away: { name: away } },
@@ -106,14 +109,23 @@ function normalizeGame(g: WcGame) {
     status: {
       short,
       long: statusLabel(short, kickoff),
-      elapsed: elapsed === 'live' ? null : undefined,
+      elapsedRaw,
+      elapsed: parseApiMinute(elapsedRaw),
     },
     league: { id: 1, name: 'World Cup' },
     group: g.group || '',
     matchId: g.id || '',
+    localDate: g.local_date || '',
+    stadiumId: g.stadium_id || '',
     scorers: { home: g.home_scorers, away: g.away_scorers },
     fixture: kickoff ? { date: kickoff.toISOString() } : undefined,
   };
+}
+
+function parseApiMinute(raw: string): number | null {
+  const s = raw.trim().toLowerCase();
+  if (/^\d+$/.test(s)) return parseInt(s, 10);
+  return null;
 }
 
 function statusLabel(short: string, kickoff: Date | null): string {
@@ -125,17 +137,29 @@ function statusLabel(short: string, kickoff: Date | null): string {
   return 'À venir';
 }
 
-function parseLocalKickoffParis(localDate?: string): Date | null {
+const STADIUM_UTC_OFFSET: Record<string, number> = {
+  '1': 6, '2': 6, '3': 6,
+  '4': 5, '5': 5, '6': 5, '7': 4, '8': 4, '9': 4, '10': 4, '11': 4,
+  '12': 4, '13': 7, '14': 4, '15': 7, '16': 7,
+};
+
+function parseKickoffUtc(localDate?: string, stadiumId?: string): Date | null {
   if (!localDate) return null;
   const m = localDate.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{1,2}):(\d{2})/);
   if (!m) return null;
-  const month = parseInt(m[1], 10) - 1;
-  const day = parseInt(m[2], 10);
-  const year = parseInt(m[3], 10);
-  const hour = parseInt(m[4], 10);
-  const minute = parseInt(m[5], 10);
-  const utcGuess = Date.UTC(year, month, day, hour + 6, minute, 0);
-  return new Date(utcGuess);
+  const offset = STADIUM_UTC_OFFSET[String(stadiumId ?? '')] ?? 5;
+  return new Date(Date.UTC(
+    parseInt(m[3], 10),
+    parseInt(m[1], 10) - 1,
+    parseInt(m[2], 10),
+    parseInt(m[4], 10) + offset,
+    parseInt(m[5], 10),
+    0,
+  ));
+}
+
+function parseLocalKickoffParis(localDate?: string): Date | null {
+  return parseKickoffUtc(localDate, '1');
 }
 
 function json(body: unknown, status = 200) {
