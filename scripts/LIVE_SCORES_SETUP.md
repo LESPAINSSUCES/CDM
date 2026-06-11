@@ -1,27 +1,30 @@
-# Scores CDM (info) — gratuit, sans API-Football
+# Scores CDM (info) — worldcup26.ir + FIFA
 
-Le widget sur `classement.html` affiche les **matchs du jour** et un lien **FIFA live**.  
-Il **ne modifie pas** `resultats.json` ni le calcul des points du concours.
+Le widget sur `classement.html` affiche les **scores live** (gratuits) et un lien **FIFA**.
 
-## Sources (100 % gratuites)
+## Sources
 
 | Source | Rôle |
 |--------|------|
-| [openfootball/worldcup.json](https://github.com/openfootball/worldcup.json) | Calendrier CDM 2026, scores publics quand mis à jour |
-| `data/resultats.json` | Scores saisis par l’organisateur (prioritaires pour le bandeau) |
-| [FIFA.com](https://www.fifa.com/fr/tournaments/mens/worldcup/canadamexicousa2026/scores-fixtures) | Scores **live** minute par minute (lien direct) |
+| [worldcup26.ir](https://worldcup26.ir/get/games) | API open source [rezarahiminia/worldcup2026](https://github.com/rezarahiminia/worldcup2026) — scores live, buteurs |
+| **Supabase `live-scores`** | Proxy CORS (obligatoire depuis GitHub Pages) |
+| `data/resultats.json` | Scores concours (prioritaires si saisis) |
+| [FIFA.com](https://www.fifa.com/fr/tournaments/mens/worldcup/canadamexicousa2026/scores-fixtures) | Référence officielle |
 
-Aucune clé API, aucun Supabase requis pour le widget.
+## Déploiement Supabase (obligatoire)
 
-## Fichier principal
+L’API worldcup26 **bloque le CORS** depuis lespainssuces.github.io.  
+Il faut redéployer la fonction proxy :
 
-`js/live-scores.js` — refresh auto toutes les **5 min** (juin–juillet 2026).
+1. [supabase.com/dashboard](https://supabase.com/dashboard) → projet `qpkiwausbvedzmovfvxe`
+2. **Edge Functions** → **`live-scores`** → coller `supabase/functions/live-scores/index.ts`
+3. **Deploy** · **Verify JWT = OFF**
+4. Plus besoin de `APIFOOTBALL_KEY` (secret supprimable)
 
-## Ancienne stack API-Football (optionnelle, dépréciée)
+Test : `https://qpkiwausbvedzmovfvxe.supabase.co/functions/v1/live-scores`  
+→ `"fixtures"` avec Mexique – Afrique du Sud si match en cours.
 
-Le dossier `supabase/functions/live-scores/` et le secret `APIFOOTBALL_KEY` ne sont **plus utilisés** par le site.  
-API-Football exige un abonnement payant pour la saison 2026 — vous pouvez ignorer cette Edge Function.
+## Fichiers site
 
-## Personnalisation
-
-Dans `js/config.js`, `liveScoresUrl` n’est plus lu par le widget.
+- `js/live-scores.js` — refresh **2 min**
+- `js/config.js` — `supabaseUrl` + `supabaseAnonKey` (déjà configurés)

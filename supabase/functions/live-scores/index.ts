@@ -5,15 +5,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const WC_LEAGUE = 1; // FIFA World Cup on API-Football
-const WC_SEASON = 2026;
-const LIVE_STATUS = '1H-HT-2H-ET-P-BT-LIVE';
+const WC2026_GAMES_URL = Deno.env.get('WC2026_GAMES_URL') || 'https://worldcup26.ir/get/games';
 
-type FixtureRow = { fixture?: { id?: number }; league?: { id?: number } };
-type ApiPayload = {
-  response?: FixtureRow[];
-  results?: number;
-  errors?: Record<string, string> | string[];
+type WcGame = {
+  id?: string;
+  home_team_name_en?: string;
+  away_team_name_en?: string;
+  home_team_label?: string;
+  away_team_label?: string;
+  home_score?: string;
+  away_score?: string;
+  local_date?: string;
+  finished?: string;
+  time_elapsed?: string;
+  group?: string;
+  type?: string;
 };
 
 serve(async (req) => {
@@ -21,124 +27,115 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  const key = Deno.env.get('APIFOOTBALL_KEY') || '';
   const fetchedAt = new Date().toISOString();
 
-  if (!key) {
-    return json({
-      error: 'APIFOOTBALL_KEY non configurée sur Supabase (Secrets).',
-      fixtures: [],
-      fetchedAt,
-    });
-  }
-
   try {
-    const { fixtures, apiErrors } = await fetchWcFixtures(key);
-    const body: Record<string, unknown> = { fixtures, fetchedAt, count: fixtures.length };
-    if (!fixtures.length && apiErrors.length) {
-      body.apiFootballErrors = apiErrors;
-      body.error = summarizeApiErrors(apiErrors);
-    }
-    return json(body);
+    const res = await fetch(WC2026_GAMES_URL, {
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) throw new Error(`worldcup26 HTTP ${res.status}`);
+    const data = await res.json();
+    const games: WcGame[] = data?.games || [];
+    const fixtures = pickTodayGames(games).map(normalizeGame);
+
+    return json({
+      fixtures,
+      fetchedAt,
+      count: fixtures.length,
+      source: 'worldcup26.ir',
+    });
   } catch (e) {
     return json({
-      error: e instanceof Error ? e.message : 'Erreur API',
+      error: e instanceof Error ? e.message : 'Erreur proxy worldcup26',
       fixtures: [],
       fetchedAt,
+      source: 'worldcup26.ir',
     }, 502);
   }
 });
 
-async function fetchWcFixtures(key: string): Promise<{ fixtures: FixtureRow[]; apiErrors: string[] }> {
-  const seen = new Set<number>();
-  const out: FixtureRow[] = [];
-  const apiErrors: string[] = [];
-
-  const add = (list: FixtureRow[]) => {
-    for (const f of filterWc(list)) {
-      const id = f.fixture?.id;
-      if (id != null && !seen.has(id)) {
-        seen.add(id);
-        out.push(f);
-      }
-    }
-  };
-
-  const tryFetch = async (path: string) => {
-    const data = await apiFetch(key, path);
-    collectApiErrors(data, apiErrors);
-    add(data?.response || []);
-    return out.length > 0;
-  };
-
-  if (await tryFetch(`fixtures?live=${WC_LEAGUE}`)) return { fixtures: out, apiErrors };
-  if (await tryFetch(`fixtures?live=all`)) return { fixtures: out, apiErrors };
-  if (await tryFetch(`fixtures?league=${WC_LEAGUE}&season=${WC_SEASON}&status=${LIVE_STATUS}`)) {
-    return { fixtures: out, apiErrors };
-  }
-
-  for (const date of getDateStrings()) {
-    if (await tryFetch(
-      `fixtures?date=${date}&league=${WC_LEAGUE}&season=${WC_SEASON}&timezone=Europe/Paris`,
-    )) {
-      return { fixtures: out, apiErrors };
-    }
-  }
-
-  return { fixtures: out, apiErrors };
-}
-
-function collectApiErrors(data: ApiPayload | null, out: string[]) {
-  const err = data?.errors;
-  if (!err) return;
-  if (Array.isArray(err)) {
-    for (const e of err) if (e && !out.includes(e)) out.push(String(e));
-    return;
-  }
-  for (const val of Object.values(err)) {
-    const msg = String(val);
-    if (msg && !out.includes(msg)) out.push(msg);
-  }
-}
-
-function summarizeApiErrors(errors: string[]): string {
-  const text = errors.join(' · ');
-  if (/suspended/i.test(text)) {
-    return 'Compte API-Football suspendu — réactivez-le sur dashboard.api-football.com puis mettez à jour APIFOOTBALL_KEY dans Supabase.';
-  }
-  if (/free plans do not have access to this season/i.test(text)) {
-    return 'Plan API-Football gratuit : pas d’accès à la CDM 2026 (saison 2026). Il faut un abonnement payant incluant cette compétition.';
-  }
-  return 'API-Football : ' + text;
-}
-
-function getDateStrings(): string[] {
-  const dates = new Set<string>();
-  const now = new Date();
-
-  dates.add(now.toISOString().slice(0, 10));
-  const tomorrowUtc = new Date(now);
-  tomorrowUtc.setUTCDate(tomorrowUtc.getUTCDate() + 1);
-  dates.add(tomorrowUtc.toISOString().slice(0, 10));
-
-  for (const offsetDays of [0, 1]) {
-    const t = new Date(now.getTime() + offsetDays * 86400000);
-    dates.add(t.toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' }));
-  }
-
-  return [...dates];
-}
-
-function filterWc(list: FixtureRow[]) {
-  return list.filter((f) => f.league?.id === WC_LEAGUE);
-}
-
-async function apiFetch(key: string, path: string): Promise<ApiPayload | null> {
-  const res = await fetch(`https://v3.football.api-sports.io/${path}`, {
-    headers: { 'x-apisports-key': key },
+function pickTodayGames(games: WcGame[]): WcGame[] {
+  const todayParis = parisDateKey(new Date());
+  const picked = games.filter((g) => {
+    const elapsed = String(g.time_elapsed || '').toLowerCase();
+    if (elapsed === 'live') return true;
+    const key = gameDateKey(g.local_date);
+    return key === todayParis;
   });
-  if (!res.ok) throw new Error(`API-Football ${res.status}`);
-  return res.json();
+  return sortGames(picked.length ? picked : games.filter((g) => String(g.time_elapsed || '').toLowerCase() === 'live'));
+}
+
+function gameDateKey(localDate?: string): string {
+  if (!localDate) return '';
+  const m = localDate.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if (!m) return '';
+  return `${m[3]}-${m[1]}-${m[2]}`;
+}
+
+function parisDateKey(d: Date): string {
+  return d.toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' });
+}
+
+function sortGames(games: WcGame[]): WcGame[] {
+  return [...games].sort((a, b) => {
+    const liveA = String(a.time_elapsed || '').toLowerCase() === 'live' ? 0 : 1;
+    const liveB = String(b.time_elapsed || '').toLowerCase() === 'live' ? 0 : 1;
+    if (liveA !== liveB) return liveA - liveB;
+    return String(a.local_date || '').localeCompare(String(b.local_date || ''));
+  });
+}
+
+function normalizeGame(g: WcGame) {
+  const home = g.home_team_name_en || g.home_team_label || '—';
+  const away = g.away_team_name_en || g.away_team_label || '—';
+  const hs = parseInt(String(g.home_score ?? ''), 10);
+  const as = parseInt(String(g.away_score ?? ''), 10);
+  const hasScore = !Number.isNaN(hs) && !Number.isNaN(as);
+  const elapsed = String(g.time_elapsed || '').toLowerCase();
+  const finished = String(g.finished || '').toUpperCase() === 'TRUE';
+
+  let short = 'NS';
+  if (elapsed === 'live') short = 'LIVE';
+  else if (finished) short = 'FT';
+
+  const kickoff = parseLocalKickoffParis(g.local_date);
+
+  return {
+    teams: { home: { name: home }, away: { name: away } },
+    goals: hasScore ? { home: hs, away: as } : { home: null, away: null },
+    status: {
+      short,
+      long: statusLabel(short, kickoff),
+      elapsed: elapsed === 'live' ? null : undefined,
+    },
+    league: { id: 1, name: 'World Cup' },
+    group: g.group || '',
+    matchId: g.id || '',
+    scorers: { home: g.home_scorers, away: g.away_scorers },
+    fixture: kickoff ? { date: kickoff.toISOString() } : undefined,
+  };
+}
+
+function statusLabel(short: string, kickoff: Date | null): string {
+  if (short === 'LIVE') return 'En cours';
+  if (short === 'FT') return 'Terminé';
+  if (kickoff) {
+    return kickoff.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });
+  }
+  return 'À venir';
+}
+
+function parseLocalKickoffParis(localDate?: string): Date | null {
+  if (!localDate) return null;
+  const m = localDate.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  const month = parseInt(m[1], 10) - 1;
+  const day = parseInt(m[2], 10);
+  const year = parseInt(m[3], 10);
+  const hour = parseInt(m[4], 10);
+  const minute = parseInt(m[5], 10);
+  const utcGuess = Date.UTC(year, month, day, hour + 6, minute, 0);
+  return new Date(utcGuess);
 }
 
 function json(body: unknown, status = 200) {
