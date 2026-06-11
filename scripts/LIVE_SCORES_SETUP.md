@@ -50,7 +50,9 @@ Puis ouvrir **classement.html** : bandeau « Scores FIFA (info live) ».
 
 ### Compte API-Football
 
-1. [api-football.com](https://www.api-football.com/) — plan gratuit ~100 req/jour
+1. [api-football.com](https://www.api-football.com/) — **la CDM 2026 (`season=2026`) n’est pas incluse dans le plan gratuit** (saisons 2022–2024 seulement). Un abonnement payant est requis pendant le tournoi.
+2. Vérifier que le compte n’est **pas suspendu** : [dashboard.api-football.com](https://dashboard.api-football.com/) — sinon `fixtures: []` sans erreur visible côté widget (avant correctif) ou message « compte suspendu ».
+3. Mettre à jour le secret `APIFOOTBALL_KEY` dans Supabase après renouvellement / changement de clé.
 
 ### Secret + déploiement
 

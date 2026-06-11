@@ -159,7 +159,8 @@
     if (err && !fixtures.length) {
       body = `<p class="live-scores-msg">${escapeHtml(err)}</p>`;
     } else if (!fixtures.length) {
-      body = `<p class="live-scores-msg">Aucun match CDM aujourd’hui. Le widget s’active pendant la compétition (juin–juillet 2026).</p>`;
+      body = `<p class="live-scores-msg">Aucun match CDM aujourd’hui. Le widget s’active pendant la compétition (juin–juillet 2026).</p>
+        <p class="live-scores-foot"><a href="${FIFA_SCORES_URL}" target="_blank" rel="noopener">Scores & calendrier FIFA →</a></p>`;
     } else {
       body = `<ul class="live-scores-list">${fixtures.map(f => {
         const home = teamLabel(f.teams?.home?.name);

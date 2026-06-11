@@ -10,6 +10,11 @@ const WC_SEASON = 2026;
 const LIVE_STATUS = '1H-HT-2H-ET-P-BT-LIVE';
 
 type FixtureRow = { fixture?: { id?: number }; league?: { id?: number } };
+type ApiPayload = {
+  response?: FixtureRow[];
+  results?: number;
+  errors?: Record<string, string> | string[];
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -28,8 +33,13 @@ serve(async (req) => {
   }
 
   try {
-    const fixtures = await fetchWcFixtures(key);
-    return json({ fixtures, fetchedAt, count: fixtures.length });
+    const { fixtures, apiErrors } = await fetchWcFixtures(key);
+    const body: Record<string, unknown> = { fixtures, fetchedAt, count: fixtures.length };
+    if (!fixtures.length && apiErrors.length) {
+      body.apiFootballErrors = apiErrors;
+      body.error = summarizeApiErrors(apiErrors);
+    }
+    return json(body);
   } catch (e) {
     return json({
       error: e instanceof Error ? e.message : 'Erreur API',
@@ -39,9 +49,10 @@ serve(async (req) => {
   }
 });
 
-async function fetchWcFixtures(key: string): Promise<FixtureRow[]> {
+async function fetchWcFixtures(key: string): Promise<{ fixtures: FixtureRow[]; apiErrors: string[] }> {
   const seen = new Set<number>();
   const out: FixtureRow[] = [];
+  const apiErrors: string[] = [];
 
   const add = (list: FixtureRow[]) => {
     for (const f of filterWc(list)) {
@@ -53,30 +64,52 @@ async function fetchWcFixtures(key: string): Promise<FixtureRow[]> {
     }
   };
 
-  // 1. Live CDM — API-Football : live=1 (pas live=all&league=1)
-  const liveRes = await apiFetch(key, `fixtures?live=${WC_LEAGUE}`);
-  add(liveRes?.response || []);
-  if (out.length) return out;
+  const tryFetch = async (path: string) => {
+    const data = await apiFetch(key, path);
+    collectApiErrors(data, apiErrors);
+    add(data?.response || []);
+    return out.length > 0;
+  };
 
-  // 2. Matchs en cours par statut
-  const statusRes = await apiFetch(
-    key,
-    `fixtures?league=${WC_LEAGUE}&season=${WC_SEASON}&status=${LIVE_STATUS}`,
-  );
-  add(statusRes?.response || []);
-  if (out.length) return out;
-
-  // 3. Calendrier du jour (fuseau France + UTC, inclut lendemain pour coups d'envoi tardifs)
-  for (const date of getDateStrings()) {
-    const dayRes = await apiFetch(
-      key,
-      `fixtures?date=${date}&league=${WC_LEAGUE}&season=${WC_SEASON}&timezone=Europe/Paris`,
-    );
-    add(dayRes?.response || []);
-    if (out.length) return out;
+  if (await tryFetch(`fixtures?live=${WC_LEAGUE}`)) return { fixtures: out, apiErrors };
+  if (await tryFetch(`fixtures?live=all`)) return { fixtures: out, apiErrors };
+  if (await tryFetch(`fixtures?league=${WC_LEAGUE}&season=${WC_SEASON}&status=${LIVE_STATUS}`)) {
+    return { fixtures: out, apiErrors };
   }
 
-  return out;
+  for (const date of getDateStrings()) {
+    if (await tryFetch(
+      `fixtures?date=${date}&league=${WC_LEAGUE}&season=${WC_SEASON}&timezone=Europe/Paris`,
+    )) {
+      return { fixtures: out, apiErrors };
+    }
+  }
+
+  return { fixtures: out, apiErrors };
+}
+
+function collectApiErrors(data: ApiPayload | null, out: string[]) {
+  const err = data?.errors;
+  if (!err) return;
+  if (Array.isArray(err)) {
+    for (const e of err) if (e && !out.includes(e)) out.push(String(e));
+    return;
+  }
+  for (const val of Object.values(err)) {
+    const msg = String(val);
+    if (msg && !out.includes(msg)) out.push(msg);
+  }
+}
+
+function summarizeApiErrors(errors: string[]): string {
+  const text = errors.join(' · ');
+  if (/suspended/i.test(text)) {
+    return 'Compte API-Football suspendu — réactivez-le sur dashboard.api-football.com puis mettez à jour APIFOOTBALL_KEY dans Supabase.';
+  }
+  if (/free plans do not have access to this season/i.test(text)) {
+    return 'Plan API-Football gratuit : pas d’accès à la CDM 2026 (saison 2026). Il faut un abonnement payant incluant cette compétition.';
+  }
+  return 'API-Football : ' + text;
 }
 
 function getDateStrings(): string[] {
@@ -100,7 +133,7 @@ function filterWc(list: FixtureRow[]) {
   return list.filter((f) => f.league?.id === WC_LEAGUE);
 }
 
-async function apiFetch(key: string, path: string) {
+async function apiFetch(key: string, path: string): Promise<ApiPayload | null> {
   const res = await fetch(`https://v3.football.api-sports.io/${path}`, {
     headers: { 'x-apisports-key': key },
   });
