@@ -9,7 +9,9 @@
       "home": "Mexique",
       "away": "Afrique du Sud",
       "scoreHome": "2",
-      "scoreAway": "0"
+      "scoreAway": "0",
+      "csc": "0",
+      "cartonsRouges": "3"
     },
     "Match 2": {
       "home": "Corée du Sud",
@@ -588,7 +590,7 @@
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
     "nbButs": "7",
-    "nbCartonsRouges": "0",
+    "nbCartonsRouges": "3",
     "nbProlongations": "4",
     "nbCSC": "0"
   }
