@@ -44,8 +44,10 @@
     "Match 3": {
       "home": "Canada",
       "away": "Bosnie Herzégovine",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 5": {
       "home": "Qatar",
@@ -585,8 +587,9 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "168",
-    "nbCartonsRouges": "7",
-    "nbProlongations": "4"
+    "nbButs": "7",
+    "nbCartonsRouges": "0",
+    "nbProlongations": "4",
+    "nbCSC": "0"
   }
 }
