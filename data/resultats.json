@@ -3,19 +3,19 @@
     "misAJour": "2026-06-12",
     "note": "Mis à jour via organisateur.html"
   },
-  "etapeDebloquee": 0,
+  "etapeDebloquee": 3,
   "matchs": {
     "Match 1": {
       "home": "Mexique",
       "away": "Afrique du Sud",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "2",
+      "scoreAway": "1"
     },
     "Match 2": {
       "home": "Corée du Sud",
       "away": "Rép. Tchèque",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "2",
+      "scoreAway": "1"
     },
     "Match 25": {
       "home": "Rép. Tchèque",
