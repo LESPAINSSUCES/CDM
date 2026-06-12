@@ -428,6 +428,37 @@ table.lb tr.lb-row-me .rank { color: var(--gold-light); }
   text-align: center;
   padding: .5rem 0;
 }
+.live-scores-widget.live-scores-error { border-color: rgba(231,76,60,0.35); }
+.live-scores-err { color: #e88; }
+.live-scores-hint {
+  font-size: .72rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.45;
+  margin: 0 .5rem .65rem;
+}
+.live-scores-hint strong { color: var(--text); font-weight: 500; }
+.live-scores-warn {
+  font-size: .72rem;
+  color: #e8c547;
+  text-align: center;
+  margin: 0 0 .35rem;
+}
+.live-scores-retry {
+  display: block;
+  margin: 0 auto .35rem;
+  padding: .45rem .85rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: rgba(200,168,75,0.12);
+  color: var(--gold);
+  font-family: 'DM Mono', monospace;
+  font-size: .68rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.live-scores-retry:hover { background: rgba(200,168,75,0.22); }
 </style>
 </head>
 <body>
@@ -477,7 +508,8 @@ table.lb tr.lb-row-me .rank { color: var(--gold-light); }
 <script src="js/league-bar.js?v=9"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/scoring.js?v=5"></script>
-<script src="js/live-scores.js?v=13"></script>
+<script src="js/worldcup26-api.js?v=1"></script>
+<script src="js/live-scores.js?v=14"></script>
 <script>
 const LS_EMAIL_KEY = 'cdm2026_email';
 let highlightEmail = '';

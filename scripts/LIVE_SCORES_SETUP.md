@@ -26,5 +26,10 @@ Test : `https://qpkiwausbvedzmovfvxe.supabase.co/functions/v1/live-scores`
 
 ## Fichiers site
 
-- `js/live-scores.js` — refresh **2 min**
+- `js/worldcup26-api.js` — fetch proxy + retry (widget + organisateur)
+- `js/live-scores.js` — refresh **2 min**, messages d’erreur explicites
 - `js/config.js` — `supabaseUrl` + `supabaseAnonKey` (déjà configurés)
+
+## Organisateur — import live
+
+Onglet **Poules** → **Importer scores du jour (live)** : préremplit le brouillon (sans publier). Vérifiez puis **Publier resultats.json**.

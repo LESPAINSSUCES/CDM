@@ -184,6 +184,28 @@ input[type="number"].score-in { width: 2.8rem; text-align: center; padding: .45r
 .confirm-box .typed-row { margin-bottom: .75rem; }
 .confirm-box .typed-row label { font-size: .72rem; margin-bottom: .25rem; }
 .confirm-box .confirm-actions { display: flex; flex-wrap: wrap; gap: .45rem; justify-content: flex-end; }
+.confirm-box.import-box { width: min(100%, 520px); max-height: min(90vh, 640px); display: flex; flex-direction: column; }
+.confirm-box.import-box h3 { color: var(--gold); }
+.import-live-list {
+  flex: 1; overflow-y: auto; margin: .5rem 0 .65rem; border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 4px; max-height: 280px;
+}
+.import-live-row {
+  display: grid; grid-template-columns: auto 2.4rem 1fr auto auto; gap: .45rem .5rem; align-items: center;
+  padding: .5rem .65rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: .78rem; cursor: pointer;
+}
+.import-live-row:last-child { border-bottom: none; }
+.import-live-row.is-live { background: rgba(231,76,60,0.06); }
+.import-live-row .import-mid { font-family: 'DM Mono', monospace; font-size: .65rem; color: var(--muted); }
+.import-live-row .import-teams { line-height: 1.35; }
+.import-live-row .import-score { font-family: 'DM Mono', monospace; font-weight: 600; color: var(--gold); white-space: nowrap; }
+.import-live-row .import-badge {
+  font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--muted);
+}
+.import-live-row.is-live .import-badge { color: #e88; }
+.import-live-empty { padding: 1rem; text-align: center; color: var(--muted); font-size: .8rem; }
+.import-bar { margin-top: .5rem; margin-bottom: 0; }
 @media (min-width: 640px) {
   .match-row { grid-template-columns: 2.8rem 1fr auto 1fr; }
   h1 { font-size: 2.2rem; }
@@ -237,6 +259,11 @@ input[type="number"].score-in { width: 2.8rem; text-align: center; padding: .45r
     <div id="panel-poules" class="org-panel card">
       <h2>Scores poules (72 matchs)</h2>
       <p class="hint">Saisissez les scores réels. Le classement et le tableau officiel seront recalculés à la publication.</p>
+      <div class="actions import-bar">
+        <button type="button" class="btn btn-primary" id="btn-import-live">Importer scores du jour (live)</button>
+      </div>
+      <p class="hint">Préremplit les champs depuis worldcup26 — <strong>vérifiez</strong> puis publiez. Rien n’est envoyé aux joueurs tant que vous n’appuyez pas sur Publier.</p>
+      <p class="err hidden" id="import-live-status"></p>
       <div id="poules-root"></div>
       <div class="reset-bar">
         <div class="actions">
@@ -332,6 +359,22 @@ input[type="number"].score-in { width: 2.8rem; text-align: center; padding: .45r
   </div>
 </div>
 
+<div id="import-overlay" class="confirm-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="import-title">
+  <div class="confirm-box import-box">
+    <h3 id="import-title">Importer scores du jour</h3>
+    <p id="import-live-meta" class="hint" style="margin-top:0"></p>
+    <div id="import-live-list" class="import-live-list"></div>
+    <label class="check-row">
+      <input type="checkbox" id="import-overwrite">
+      <span>Remplacer les scores déjà saisis pour les matchs cochés</span>
+    </label>
+    <div class="confirm-actions">
+      <button type="button" class="btn" id="import-cancel">Annuler</button>
+      <button type="button" class="btn btn-primary" id="import-apply">Appliquer au brouillon</button>
+    </div>
+  </div>
+</div>
+
 <div id="confirm-overlay" class="confirm-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
   <div class="confirm-box">
     <h3 id="confirm-title">Confirmer</h3>
@@ -352,6 +395,7 @@ input[type="number"].score-in { width: 2.8rem; text-align: center; padding: .45r
 </div>
 
 <script src="js/config.js"></script>
+<script src="js/worldcup26-api.js?v=1"></script>
 <script src="js/leagues.js"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/seed-demo-grilles.js"></script>
@@ -447,6 +491,7 @@ let draftEtape = 0;
 let engineCache = { R32_SIDE: {}, list32: [] };
 let undoSnapshot = null;
 let confirmResolve = null;
+let pendingImportRows = [];
 
 const BONUS_OTHER_CHOICE = 'Autre';
 
@@ -795,6 +840,105 @@ function closeConfirmDialog(result) {
   const fn = confirmResolve;
   confirmResolve = null;
   if (fn) fn(result);
+}
+
+function closeImportOverlay() {
+  document.getElementById('import-overlay').classList.add('hidden');
+  pendingImportRows = [];
+}
+
+function renderImportOverlayList(rows) {
+  const list = document.getElementById('import-live-list');
+  if (!rows.length) {
+    list.innerHTML = '<p class="import-live-empty">Aucun score poule terminé ou en cours aujourd’hui.</p>';
+    document.getElementById('import-apply').disabled = true;
+    return;
+  }
+  document.getElementById('import-apply').disabled = false;
+  list.innerHTML = rows.map((r, i) => {
+    const cur = getPouleMatch(r.num);
+    const hasCur = Number.isFinite(parseScore(cur.scoreHome)) && Number.isFinite(parseScore(cur.scoreAway));
+    const same = hasCur && parseScore(cur.scoreHome) === r.scoreHome && parseScore(cur.scoreAway) === r.scoreAway;
+    const curTxt = hasCur ? ` (actuel : ${cur.scoreHome}–${cur.scoreAway})` : '';
+    const grp = r.group ? ` · grp ${escapeAttr(r.group)}` : '';
+    return `<label class="import-live-row${r.isLive ? ' is-live' : ''}${same ? ' import-same' : ''}">
+      <input type="checkbox" data-import-idx="${i}" checked>
+      <span class="import-mid">M${r.num}</span>
+      <span class="import-teams">${escapeAttr(r.home)} – ${escapeAttr(r.away)}${grp}${same ? '' : escapeAttr(curTxt)}</span>
+      <span class="import-score">${r.scoreHome}–${r.scoreAway}</span>
+      <span class="import-badge">${escapeAttr(r.sourceLabel)}</span>
+    </label>`;
+  }).join('');
+}
+
+function openImportOverlay(rows, meta) {
+  pendingImportRows = rows;
+  document.getElementById('import-live-meta').textContent = meta;
+  document.getElementById('import-overwrite').checked = false;
+  renderImportOverlayList(rows);
+  document.getElementById('import-overlay').classList.remove('hidden');
+}
+
+async function startLiveImport() {
+  const btn = document.getElementById('btn-import-live');
+  const status = document.getElementById('import-live-status');
+  if (!window.CDM_WC26?.fetchLiveFixtures) {
+    showMsg('Module worldcup26-api.js manquant.', true);
+    return;
+  }
+  btn.disabled = true;
+  status.classList.remove('hidden');
+  status.textContent = 'Chargement des scores live…';
+  status.classList.remove('err');
+  try {
+    const payload = await CDM_WC26.fetchLiveFixtures();
+    const idx = CDM_WC26.buildPouleIndex(GROUPS);
+    const rows = CDM_WC26.proposePouleImports(payload.fixtures, idx, { includeLive: true });
+    const updated = new Date(payload.fetchedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const meta = `${rows.length} match(s) poule · source ${payload.source || 'worldcup26'} · màj ${updated}`;
+    status.textContent = '';
+    status.classList.add('hidden');
+    openImportOverlay(rows, meta);
+  } catch (e) {
+    status.textContent = e.message || 'Impossible de charger les scores live.';
+    status.classList.add('err');
+    showMsg(status.textContent, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function applyLiveImport() {
+  const overwrite = document.getElementById('import-overwrite').checked;
+  const checked = [...document.querySelectorAll('#import-live-list input[data-import-idx]:checked')]
+    .map(el => pendingImportRows[Number(el.dataset.importIdx)])
+    .filter(Boolean);
+  if (!checked.length) {
+    showMsg('Cochez au moins un match à importer.', true);
+    return;
+  }
+  let applied = 0;
+  let skipped = 0;
+  pushUndo('Import scores live (poules)');
+  checked.forEach(r => {
+    const cur = getPouleMatch(r.num);
+    const hasCur = Number.isFinite(parseScore(cur.scoreHome)) && Number.isFinite(parseScore(cur.scoreAway));
+    if (hasCur && !overwrite) {
+      skipped++;
+      return;
+    }
+    setPouleScore(r.num, r.home, r.away, String(r.scoreHome), String(r.scoreAway));
+    applied++;
+  });
+  syncDerivedFields();
+  renderPoules();
+  closeImportOverlay();
+  const liveN = checked.filter(r => r.isLive).length;
+  let msg = `${applied} score(s) appliqué(s) au brouillon.`;
+  if (skipped) msg += ` ${skipped} ignoré(s) (déjà saisis — cochez « Remplacer »).`;
+  if (liveN) msg += ` ${liveN} en cours : vérifiez avant publication.`;
+  msg += ' Publiez quand c’est bon.';
+  showMsg(msg);
 }
 
 function clearKoScoreKeys(mid) {
@@ -1544,6 +1688,12 @@ document.getElementById('btn-logout').addEventListener('click', () => {
 document.getElementById('btn-undo').addEventListener('click', restoreUndo);
 document.getElementById('btn-reset-etape-draft').addEventListener('click', () => runReset('etape-draft'));
 document.getElementById('btn-reset-poules').addEventListener('click', () => runReset('poules'));
+document.getElementById('btn-import-live').addEventListener('click', startLiveImport);
+document.getElementById('import-cancel').addEventListener('click', closeImportOverlay);
+document.getElementById('import-apply').addEventListener('click', applyLiveImport);
+document.getElementById('import-overlay').addEventListener('click', e => {
+  if (e.target.id === 'import-overlay') closeImportOverlay();
+});
 document.getElementById('btn-reset-ko-tableau').addEventListener('click', () => runReset('ko-tableau'));
 document.getElementById('btn-reset-ko-scores-all').addEventListener('click', () => runReset('ko-scores-all'));
 document.getElementById('btn-reset-bonus-poules').addEventListener('click', () => runReset('bonus-poules'));
