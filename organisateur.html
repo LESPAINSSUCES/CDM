@@ -24,6 +24,22 @@ input[type="password"], input[type="text"], input[type="number"], select {
   background: var(--surface); color: var(--text); font-family: inherit; font-size: .88rem;
 }
 input[type="number"].score-in { width: 2.8rem; text-align: center; padding: .45rem .25rem; }
+input[type="number"].stat-in { width: 2.1rem; text-align: center; padding: .35rem .15rem; font-size: .78rem; }
+.match-score-block {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .35rem .4rem;
+}
+.match-stat {
+  display: inline-flex; align-items: center; gap: .2rem;
+  font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--muted);
+}
+.stats-bar {
+  font-family: 'DM Mono', monospace; font-size: .68rem; color: var(--gold);
+  padding: .55rem .65rem; margin: .5rem 0 .65rem;
+  border-radius: 4px; border: 1px solid rgba(200,168,75,0.25);
+  background: rgba(200,168,75,0.06); line-height: 1.5;
+}
+.stats-bar span { color: var(--muted); }
 .btn {
   display: inline-block; margin-top: .5rem; padding: .55rem 1rem; border-radius: 4px; border: 1px solid var(--border);
   background: rgba(200,168,75,0.12); color: var(--gold); font-family: 'DM Mono', monospace; font-size: .7rem;
@@ -207,7 +223,8 @@ input[type="number"].score-in { width: 2.8rem; text-align: center; padding: .45r
 .import-live-empty { padding: 1rem; text-align: center; color: var(--muted); font-size: .8rem; }
 .import-bar { margin-top: .5rem; margin-bottom: 0; }
 @media (min-width: 640px) {
-  .match-row { grid-template-columns: 2.8rem 1fr auto 1fr; }
+  .match-row { grid-template-columns: 2.8rem minmax(0,1fr) auto minmax(0,1fr); }
+  input[type="number"].stat-in { width: 2.35rem; }
   h1 { font-size: 2.2rem; }
 }
 </style>
@@ -258,7 +275,8 @@ input[type="number"].score-in { width: 2.8rem; text-align: center; padding: .45r
 
     <div id="panel-poules" class="org-panel card">
       <h2>Scores poules (72 matchs)</h2>
-      <p class="hint">Saisissez les scores réels. Le classement et le tableau officiel seront recalculés à la publication.</p>
+      <p class="hint">Saisissez scores, <strong>CSC</strong> et <strong>CR</strong> (cartons rouges) par match — les totaux alimentent les bonus à la publication.</p>
+      <div id="poules-stats-bar" class="stats-bar" aria-live="polite"></div>
       <div class="actions import-bar">
         <button type="button" class="btn btn-primary" id="btn-import-live">Importer scores du jour (live)</button>
       </div>
@@ -287,7 +305,8 @@ input[type="number"].score-in { width: 2.8rem; text-align: center; padding: .45r
 
     <div id="panel-ko-scores" class="org-panel card">
       <h2>Phase finale — scores (officiel)</h2>
-      <p class="hint">Scores réels M73–M104. En cas d’égalité, indiquez le vainqueur aux tirs au but.</p>
+      <p class="hint">Scores réels M73–M104 + CSC / CR par match. En cas d’égalité, indiquez le vainqueur aux tirs au but.</p>
+      <div id="ko-stats-bar" class="stats-bar" aria-live="polite"></div>
       <div id="ko-scores-root"></div>
       <div class="reset-bar">
         <div class="actions">
@@ -556,17 +575,29 @@ function parseScore(v) {
   return Number.isFinite(n) ? n : NaN;
 }
 
+function parseCount(v) {
+  if (v === '' || v == null) return 0;
+  const n = parseInt(String(v).trim(), 10);
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+
 function matchKey(num) { return 'Match ' + num; }
 
 function getPouleMatch(num) {
   if (!state.matchs) state.matchs = {};
-  return state.matchs[matchKey(num)] || state.matchs[String(num)] || { home: '', away: '', scoreHome: '', scoreAway: '' };
+  const base = { home: '', away: '', scoreHome: '', scoreAway: '', csc: '', cartonsRouges: '' };
+  return { ...base, ...(state.matchs[matchKey(num)] || state.matchs[String(num)] || {}) };
+}
+
+function setPouleMatchFields(num, home, away, patch) {
+  if (!state.matchs) state.matchs = {};
+  const k = matchKey(num);
+  const cur = getPouleMatch(num);
+  state.matchs[k] = { home, away, ...cur, ...patch };
 }
 
 function setPouleScore(num, home, away, sh, sa) {
-  if (!state.matchs) state.matchs = {};
-  const k = matchKey(num);
-  state.matchs[k] = { home, away, scoreHome: sh, scoreAway: sa };
+  setPouleMatchFields(num, home, away, { scoreHome: sh, scoreAway: sa });
 }
 
 function getKoTeams(mid) {
@@ -577,16 +608,90 @@ function getKoTeams(mid) {
 
 function getKoScore(mid) {
   const keys = [matchKey(mid), String(mid), 'M' + mid];
+  const base = { scoreHome: '', scoreAway: '', csc: '', cartonsRouges: '' };
   for (const k of keys) {
     const s = state.scoresElimination?.[k];
-    if (s) return s;
+    if (s) return { ...base, ...s };
   }
-  return { scoreHome: '', scoreAway: '' };
+  return base;
 }
 
-function setKoScore(mid, home, away, sh, sa) {
+function setKoScore(mid, home, away, sh, sa, extra) {
   if (!state.scoresElimination) state.scoresElimination = {};
-  state.scoresElimination[matchKey(mid)] = { home, away, scoreHome: sh, scoreAway: sa };
+  const cur = getKoScore(mid);
+  state.scoresElimination[matchKey(mid)] = {
+    home, away, scoreHome: sh, scoreAway: sa,
+    csc: cur.csc, cartonsRouges: cur.cartonsRouges, ...extra,
+  };
+}
+
+function sumPouleGoals() {
+  let n = 0;
+  for (let i = 1; i <= 72; i++) {
+    const m = getPouleMatch(i);
+    const h = parseScore(m.scoreHome);
+    const a = parseScore(m.scoreAway);
+    if (Number.isFinite(h) && Number.isFinite(a)) n += h + a;
+  }
+  return n;
+}
+
+function sumKoGoals() {
+  let n = 0;
+  for (let m = 73; m <= 104; m++) {
+    const sc = getKoScore(m);
+    const h = parseScore(sc.scoreHome);
+    const a = parseScore(sc.scoreAway);
+    if (Number.isFinite(h) && Number.isFinite(a)) n += h + a;
+  }
+  return n;
+}
+
+function sumAllGoals() {
+  return sumPouleGoals() + sumKoGoals();
+}
+
+function sumPouleStat(field) {
+  let n = 0;
+  for (let i = 1; i <= 72; i++) {
+    n += parseCount(getPouleMatch(i)[field]);
+  }
+  return n;
+}
+
+function sumKoStat(field) {
+  let n = 0;
+  for (let m = 73; m <= 104; m++) {
+    n += parseCount(getKoScore(m)[field]);
+  }
+  return n;
+}
+
+function sumAllCartonsRouges() {
+  return sumPouleStat('cartonsRouges') + sumKoStat('cartonsRouges');
+}
+
+function updateMatchStatsBars() {
+  const poulesBar = document.getElementById('poules-stats-bar');
+  if (poulesBar) {
+    const csc = sumPouleStat('csc');
+    const cr = sumPouleStat('cartonsRouges');
+    const buts = sumPouleGoals();
+    poulesBar.innerHTML = `Totaux poules · <strong>CSC ${csc}</strong> · <strong>CR ${cr}</strong> · <span>${buts} buts</span> <span>(bonus CSC = ${csc} à la publication)</span>`;
+  }
+  const koBar = document.getElementById('ko-stats-bar');
+  if (koBar) {
+    const cscKo = sumKoStat('csc');
+    const crKo = sumKoStat('cartonsRouges');
+    koBar.innerHTML = `Phase finale · <strong>CSC ${cscKo}</strong> · <strong>CR ${crKo}</strong> · <span>${sumKoGoals()} buts KO</span> · <span>CR total CDM : ${sumAllCartonsRouges()}</span> · <span>Buts total CDM : ${sumAllGoals()}</span>`;
+  }
+}
+
+function syncBonusFromMatchStats() {
+  if (!state.bonus) state.bonus = {};
+  state.bonus.nbCSC = String(sumPouleStat('csc'));
+  state.bonus.nbCartonsRouges = String(sumAllCartonsRouges());
+  if (sumAllGoals() > 0) state.bonus.nbButs = String(sumAllGoals());
 }
 
 function groupLetter(title) {
@@ -762,6 +867,8 @@ function syncDerivedFields() {
     troisiemePlaceChoix: third,
     vainqueurFinal: winner,
   };
+  syncBonusFromMatchStats();
+  updateMatchStatsBars();
 }
 
 function updateUndoUI() {
@@ -972,7 +1079,7 @@ function clearDownstreamFromPoules() {
 function resetPoulesScores(cascade) {
   for (const rows of Object.values(GROUPS)) {
     for (const [num, home, away] of rows) {
-      setPouleScore(num, home, away, '', '');
+      setPouleMatchFields(num, home, away, { scoreHome: '', scoreAway: '', csc: '', cartonsRouges: '' });
     }
   }
   if (cascade) clearDownstreamFromPoules();
@@ -1332,7 +1439,13 @@ function renderPoules() {
       row.innerHTML = `
         <span class="mid">M${num}</span>
         <span class="teams">${escapeAttr(home)}</span>
-        <span class="vs"><input type="number" class="score-in" min="0" max="15" data-poule="${num}" data-side="h" value="${escapeAttr(m.scoreHome || '')}"> – <input type="number" class="score-in" min="0" max="15" data-poule="${num}" data-side="a" value="${escapeAttr(m.scoreAway || '')}"></span>
+        <span class="vs match-score-block">
+          <input type="number" class="score-in" min="0" max="15" data-poule="${num}" data-side="h" value="${escapeAttr(m.scoreHome || '')}" aria-label="Score domicile M${num}">
+          <span>–</span>
+          <input type="number" class="score-in" min="0" max="15" data-poule="${num}" data-side="a" value="${escapeAttr(m.scoreAway || '')}" aria-label="Score extérieur M${num}">
+          <span class="match-stat">CSC<input type="number" class="stat-in" min="0" max="9" data-poule-stat="csc" data-poule="${num}" value="${escapeAttr(m.csc ?? '')}" aria-label="CSC M${num}"></span>
+          <span class="match-stat">CR<input type="number" class="stat-in" min="0" max="9" data-poule-stat="cartonsRouges" data-poule="${num}" value="${escapeAttr(m.cartonsRouges ?? '')}" aria-label="Cartons rouges M${num}"></span>
+        </span>
         <span class="teams">${escapeAttr(away)}</span>`;
       body.appendChild(row);
     });
@@ -1340,22 +1453,38 @@ function renderPoules() {
     block.appendChild(body);
     root.appendChild(block);
   });
+  function commitPouleRow(num, row) {
+    let home = '', away = '';
+    for (const rows of Object.values(GROUPS)) {
+      for (const [n, h, a] of rows) {
+        if (n === num) { home = h; away = a; break; }
+      }
+    }
+    const hIn = row.querySelector('[data-side="h"]');
+    const aIn = row.querySelector('[data-side="a"]');
+    const cscIn = row.querySelector('[data-poule-stat="csc"]');
+    const crIn = row.querySelector('[data-poule-stat="cartonsRouges"]');
+    setPouleMatchFields(num, home, away, {
+      scoreHome: hIn.value,
+      scoreAway: aIn.value,
+      csc: cscIn.value,
+      cartonsRouges: crIn.value,
+    });
+  }
   root.querySelectorAll('input[data-poule]').forEach(inp => {
     inp.addEventListener('input', () => {
-      const num = Number(inp.dataset.poule);
-      const side = inp.dataset.side;
-      let home = '', away = '';
-      for (const rows of Object.values(GROUPS)) {
-        for (const [n, h, a] of rows) {
-          if (n === num) { home = h; away = a; break; }
-        }
-      }
-      const row = inp.closest('.match-row');
-      const hIn = row.querySelector('[data-side="h"]');
-      const aIn = row.querySelector('[data-side="a"]');
-      setPouleScore(num, home, away, hIn.value, aIn.value);
+      commitPouleRow(Number(inp.dataset.poule), inp.closest('.match-row'));
+      syncDerivedFields();
     });
   });
+  root.querySelectorAll('input[data-poule-stat]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      commitPouleRow(Number(inp.dataset.poule), inp.closest('.match-row'));
+      syncBonusFromMatchStats();
+      updateMatchStatsBars();
+    });
+  });
+  updateMatchStatsBars();
 }
 
 function renderMatchSections() {
@@ -1423,7 +1552,13 @@ function renderKoScores() {
       row.innerHTML = `
         <span class="mid">M${m}</span>
         <span class="teams">${escapeAttr(home || '—')}</span>
-        <span class="vs"><input type="number" class="score-in" min="0" max="15" data-ko="${m}" data-side="h" value="${escapeAttr(sc.scoreHome || '')}"> – <input type="number" class="score-in" min="0" max="15" data-ko="${m}" data-side="a" value="${escapeAttr(sc.scoreAway || '')}"></span>
+        <span class="vs match-score-block">
+          <input type="number" class="score-in" min="0" max="15" data-ko="${m}" data-side="h" value="${escapeAttr(sc.scoreHome || '')}">
+          <span>–</span>
+          <input type="number" class="score-in" min="0" max="15" data-ko="${m}" data-side="a" value="${escapeAttr(sc.scoreAway || '')}">
+          <span class="match-stat">CSC<input type="number" class="stat-in" min="0" max="9" data-ko-stat="csc" data-ko="${m}" value="${escapeAttr(sc.csc ?? '')}"></span>
+          <span class="match-stat">CR<input type="number" class="stat-in" min="0" max="9" data-ko-stat="cartonsRouges" data-ko="${m}" value="${escapeAttr(sc.cartonsRouges ?? '')}"></span>
+        </span>
         <span class="teams">${escapeAttr(away || '—')}</span>`;
       grid.appendChild(row);
       const hVal = parseScore(sc.scoreHome);
@@ -1454,17 +1589,37 @@ function renderKoScores() {
       const mid = Number(inp.dataset.ko);
       const [home, away] = getKoTeams(mid);
       const row = inp.closest('.match-row');
-      const hIn = row.querySelector('[data-side="h"]');
-      const aIn = row.querySelector('[data-side="a"]');
-      setKoScore(mid, home, away, hIn.value, aIn.value);
-      const h = parseScore(hIn.value);
-      const a = parseScore(aIn.value);
+      commitKoRow(mid, home, away, row);
+      const h = parseScore(row.querySelector('[data-side="h"]').value);
+      const a = parseScore(row.querySelector('[data-side="a"]').value);
       if (!Number.isFinite(h) || !Number.isFinite(a) || h !== a) {
         delete state.vainqueursTableauElimination?.[String(mid)];
       }
       renderKoScores();
     });
   });
+  root.querySelectorAll('input[data-ko-stat]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const mid = Number(inp.dataset.ko);
+      const [home, away] = getKoTeams(mid);
+      commitKoRow(mid, home, away, inp.closest('.match-row'), false);
+      syncBonusFromMatchStats();
+      updateMatchStatsBars();
+    });
+  });
+  updateMatchStatsBars();
+}
+
+function commitKoRow(mid, home, away, row, syncAll) {
+  const hIn = row.querySelector('[data-side="h"]');
+  const aIn = row.querySelector('[data-side="a"]');
+  const cscIn = row.querySelector('[data-ko-stat="csc"]');
+  const crIn = row.querySelector('[data-ko-stat="cartonsRouges"]');
+  setKoScore(mid, home, away, hIn.value, aIn.value, {
+    csc: cscIn?.value ?? '',
+    cartonsRouges: crIn?.value ?? '',
+  });
+  if (syncAll !== false) syncDerivedFields();
 }
 
 function renderBonus() {
@@ -1487,7 +1642,15 @@ function renderBonus() {
     } else {
       input = `<input type="number" data-bonus="${f.key}" min="0" max="${f.max || 999}" value="${escapeAttr(val)}">`;
     }
-    row.innerHTML = `<label>${f.label}</label>${input}`;
+    let statHint = '';
+    if (f.key === 'nbCSC') {
+      statHint = `<p class="hint" style="margin:.25rem 0 0">Somme CSC saisie par match (poules) : <strong>${sumPouleStat('csc')}</strong> — recalculée à la publication.</p>`;
+    } else if (f.key === 'nbCartonsRouges') {
+      statHint = `<p class="hint" style="margin:.25rem 0 0">Somme CR par match (M1–M104) : <strong>${sumAllCartonsRouges()}</strong> — recalculée à la publication.</p>`;
+    } else if (f.key === 'nbButs') {
+      statHint = `<p class="hint" style="margin:.25rem 0 0">Buts des matchs publiés (M1–M104) : <strong>${sumAllGoals()}</strong> — recalculé à la publication si &gt; 0.</p>`;
+    }
+    row.innerHTML = `<label>${f.label}</label>${input}${statHint}`;
     root.appendChild(row);
   });
   root.querySelectorAll('[data-bonus]').forEach(el => {
