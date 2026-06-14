@@ -94,8 +94,10 @@
     "Match 7": {
       "home": "Haïti",
       "away": "Écosse",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "0",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 30": {
       "home": "Écosse",
@@ -132,8 +134,10 @@
     "Match 8": {
       "home": "Australie",
       "away": "Turquie",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "2",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 32": {
       "home": "Turquie",
@@ -595,7 +599,7 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "16",
+    "nbButs": "19",
     "nbCartonsRouges": "3",
     "nbProlongations": "4",
     "nbCSC": "1"
