@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-06-13",
+    "misAJour": "2026-06-14",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 3,
@@ -54,8 +54,10 @@
     "Match 5": {
       "home": "Qatar",
       "away": "Suisse",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 26": {
       "home": "Suisse",
@@ -84,8 +86,10 @@
     "Match 6": {
       "home": "Brésil",
       "away": "Maroc",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 7": {
       "home": "Haïti",
@@ -591,7 +595,7 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "12",
+    "nbButs": "16",
     "nbCartonsRouges": "3",
     "nbProlongations": "4",
     "nbCSC": "1"
