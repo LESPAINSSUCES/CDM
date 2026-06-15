@@ -246,8 +246,10 @@
     "Match 14": {
       "home": "Belgique",
       "away": "Égypte",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "1",
+      "csc": "1",
+      "cartonsRouges": ""
     },
     "Match 16": {
       "home": "Iran",
@@ -282,8 +284,10 @@
     "Match 13": {
       "home": "Espagne",
       "away": "Cap Vert",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "0",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 15": {
       "home": "Arabie Saoudite",
@@ -607,9 +611,9 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "38",
+    "nbButs": "40",
     "nbCartonsRouges": "3",
     "nbProlongations": "4",
-    "nbCSC": "1"
+    "nbCSC": "2"
   }
 }
