@@ -105,7 +105,9 @@
     const gh = f.goals?.home;
     const ga = f.goals?.away;
     const hasScore = gh != null && ga != null && !Number.isNaN(Number(gh)) && !Number.isNaN(Number(ga));
-    const short = f.status?.short || 'NS';
+    const elapsedRaw = String(f.status?.elapsedRaw || '').trim().toLowerCase();
+    let short = f.status?.short || 'NS';
+    if (short === 'NS' && elapsedRaw === 'finished') short = 'FT';
     return {
       home,
       away,
@@ -138,7 +140,10 @@
       try {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-        const url = proxyUrl + (proxyUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+        const qs = new URLSearchParams({ t: String(Date.now()) });
+        if (options.windowHours > 0) qs.set('window', String(options.windowHours) + 'h');
+        const sep = proxyUrl.includes('?') ? '&' : '?';
+        const url = proxyUrl + sep + qs.toString();
         const res = await fetch(url, { headers, signal: controller.signal });
         clearTimeout(timer);
         lastStatus = res.status;
@@ -150,6 +155,7 @@
             fetchedAt: data.fetchedAt || new Date().toISOString(),
             source: data.source || 'worldcup26.ir',
             error: data.error || null,
+            windowHours: data.windowHours || options.windowHours || null,
           };
         }
         if (data.error) lastErr = new Error(data.error);
@@ -196,6 +202,8 @@
   function proposePouleImports(fixtures, pouleIndex, opts = {}) {
     const includeLive = opts.includeLive !== false;
     const onlyFinished = opts.onlyFinished === true;
+    const onlyEmpty = opts.onlyEmpty === true;
+    const isPouleEmpty = typeof opts.isPouleEmpty === 'function' ? opts.isPouleEmpty : null;
     const out = [];
 
     fixtures.forEach((fx) => {
@@ -206,6 +214,7 @@
 
       const match = findPouleMatch(pouleIndex, fx.home, fx.away);
       if (!match) return;
+      if (onlyEmpty && isPouleEmpty && !isPouleEmpty(match.num)) return;
 
       let sh = fx.scoreHome;
       let sa = fx.scoreAway;

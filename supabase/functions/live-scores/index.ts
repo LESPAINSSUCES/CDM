@@ -30,6 +30,8 @@ serve(async (req) => {
   }
 
   const fetchedAt = new Date().toISOString();
+  const reqUrl = new URL(req.url);
+  const windowHours = parseWindowHours(reqUrl.searchParams.get('window'));
 
   try {
     const res = await fetch(WC2026_GAMES_URL, {
@@ -38,13 +40,15 @@ serve(async (req) => {
     if (!res.ok) throw new Error(`worldcup26 HTTP ${res.status}`);
     const data = await res.json();
     const games: WcGame[] = data?.games || [];
-    const fixtures = pickTodayGames(games).map(normalizeGame);
+    const picked = windowHours > 0 ? pickWindowGames(games, windowHours) : pickTodayGames(games);
+    const fixtures = picked.map(normalizeGame);
 
     return json({
       fixtures,
       fetchedAt,
       count: fixtures.length,
       source: 'worldcup26.ir',
+      windowHours: windowHours > 0 ? windowHours : null,
     });
   } catch (e) {
     return json({
@@ -55,6 +59,53 @@ serve(async (req) => {
     }, 502);
   }
 });
+
+function parseWindowHours(raw: string | null): number {
+  if (!raw) return 0;
+  const s = raw.trim().toLowerCase();
+  if (s === '48' || s === '48h') return 48;
+  const n = parseInt(s, 10);
+  return Number.isFinite(n) && n > 0 && n <= 168 ? n : 0;
+}
+
+function isGroupGame(g: WcGame): boolean {
+  const t = String(g.type || 'group').toLowerCase();
+  return t === 'group' && /^[A-L]$/i.test(String(g.group || '').trim());
+}
+
+function isLiveGame(g: WcGame): boolean {
+  return String(g.time_elapsed || '').toLowerCase() === 'live';
+}
+
+function isFinishedGame(g: WcGame): boolean {
+  const elapsed = String(g.time_elapsed || '').toLowerCase();
+  return String(g.finished || '').toUpperCase() === 'TRUE' || elapsed === 'finished';
+}
+
+/** Poules terminées / live dont le coup d'envoi est dans les N dernières heures (organisateur). */
+function pickWindowGames(games: WcGame[], windowHours: number): WcGame[] {
+  const now = Date.now();
+  const windowMs = windowHours * 3600000;
+  const maxFutureMs = 2 * 3600000;
+  const maxPastMs = windowMs + 3 * 3600000;
+
+  const picked = games.filter((g) => {
+    if (!isGroupGame(g)) return false;
+    const live = isLiveGame(g);
+    const finished = isFinishedGame(g);
+    if (!live && !finished) return false;
+
+    const kickoff = parseKickoffUtc(g.local_date, g.stadium_id);
+    if (!kickoff) return true;
+
+    const delta = now - kickoff.getTime();
+    if (delta < -maxFutureMs) return false;
+    if (delta > maxPastMs) return false;
+    return true;
+  });
+
+  return sortGames(picked);
+}
 
 function pickTodayGames(games: WcGame[]): WcGame[] {
   const todayParis = parisDateKey(new Date());
@@ -98,7 +149,7 @@ function normalizeGame(g: WcGame) {
 
   let short = 'NS';
   if (elapsed === 'live') short = 'LIVE';
-  else if (finished) short = 'FT';
+  else if (finished || elapsed === 'finished') short = 'FT';
 
   const kickoff = parseKickoffUtc(g.local_date, g.stadium_id);
   const elapsedRaw = String(g.time_elapsed || '');

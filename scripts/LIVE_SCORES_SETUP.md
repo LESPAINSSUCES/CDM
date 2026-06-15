@@ -24,6 +24,11 @@ Il faut redéployer la fonction proxy :
 Test : `https://qpkiwausbvedzmovfvxe.supabase.co/functions/v1/live-scores`  
 → `"fixtures"` avec Mexique – Afrique du Sud si match en cours.
 
+Import organisateur (48 h, poules vides) :  
+`…/live-scores?window=48h` → matchs poules **terminés ou live** des **48 dernières heures**.
+
+**Redéployez** `live-scores` après toute mise à jour de `index.ts`.
+
 ## Fichiers site
 
 - `js/worldcup26-api.js` — fetch proxy + retry (widget + organisateur)
@@ -32,4 +37,7 @@ Test : `https://qpkiwausbvedzmovfvxe.supabase.co/functions/v1/live-scores`
 
 ## Organisateur — import live
 
-Onglet **Poules** → **Importer scores du jour (live)** : préremplit le brouillon (sans publier). Vérifiez puis **Publier resultats.json**.
+Onglet **Poules** → **Importer scores du jour (live)** :
+- Fenêtre **48 h** (terminés + en cours)
+- Seulement les champs poules **encore vides**
+- Vérifiez puis **Publier resultats.json**

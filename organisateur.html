@@ -280,7 +280,7 @@ input[type="number"].stat-in { width: 2.1rem; text-align: center; padding: .35re
       <div class="actions import-bar">
         <button type="button" class="btn btn-primary" id="btn-import-live">Importer scores du jour (live)</button>
       </div>
-      <p class="hint">Préremplit les champs depuis worldcup26 — <strong>vérifiez</strong> puis publiez. Rien n’est envoyé aux joueurs tant que vous n’appuyez pas sur Publier.</p>
+      <p class="hint">Préremplit les champs <strong>vides</strong> (48 h, terminés/en cours) depuis worldcup26 — <strong>vérifiez</strong> puis publiez.</p>
       <p class="err hidden" id="import-live-status"></p>
       <div id="poules-root"></div>
       <div class="reset-bar">
@@ -414,7 +414,7 @@ input[type="number"].stat-in { width: 2.1rem; text-align: center; padding: .35re
 </div>
 
 <script src="js/config.js"></script>
-<script src="js/worldcup26-api.js?v=1"></script>
+<script src="js/worldcup26-api.js?v=2"></script>
 <script src="js/leagues.js"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/seed-demo-grilles.js"></script>
@@ -957,7 +957,7 @@ function closeImportOverlay() {
 function renderImportOverlayList(rows) {
   const list = document.getElementById('import-live-list');
   if (!rows.length) {
-    list.innerHTML = '<p class="import-live-empty">Aucun score poule terminé ou en cours aujourd’hui.</p>';
+    list.innerHTML = '<p class="import-live-empty">Aucun match poule vide à importer (48 h).<br>Tous déjà saisis, ou API sans score terminé (NS) — saisie manuelle / FIFA.</p>';
     document.getElementById('import-apply').disabled = true;
     return;
   }
@@ -998,11 +998,18 @@ async function startLiveImport() {
   status.textContent = 'Chargement des scores live…';
   status.classList.remove('err');
   try {
-    const payload = await CDM_WC26.fetchLiveFixtures();
+    const payload = await CDM_WC26.fetchLiveFixtures({ windowHours: 48 });
     const idx = CDM_WC26.buildPouleIndex(GROUPS);
-    const rows = CDM_WC26.proposePouleImports(payload.fixtures, idx, { includeLive: true });
+    const rows = CDM_WC26.proposePouleImports(payload.fixtures, idx, {
+      includeLive: true,
+      onlyEmpty: true,
+      isPouleEmpty(num) {
+        const m = getPouleMatch(num);
+        return !Number.isFinite(parseScore(m.scoreHome)) || !Number.isFinite(parseScore(m.scoreAway));
+      },
+    });
     const updated = new Date(payload.fetchedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    const meta = `${rows.length} match(s) poule · source ${payload.source || 'worldcup26'} · màj ${updated}`;
+    const meta = `${rows.length} match(s) poule vide · fenêtre 48 h · source ${payload.source || 'worldcup26'} · màj ${updated}`;
     status.textContent = '';
     status.classList.add('hidden');
     openImportOverlay(rows, meta);
