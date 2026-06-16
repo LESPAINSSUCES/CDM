@@ -326,8 +326,10 @@
     "Match 17": {
       "home": "France",
       "away": "Sénégal",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "3",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 18": {
       "home": "Irak",
@@ -615,7 +617,7 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "46",
+    "nbButs": "50",
     "nbCartonsRouges": "3",
     "nbProlongations": "4",
     "nbCSC": "3"
