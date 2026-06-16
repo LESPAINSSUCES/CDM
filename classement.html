@@ -181,6 +181,35 @@ nav .tab-link.active { color: var(--gold); border-color: var(--gold); }
 .page-subactions a.page-subactions-primary:hover {
   background: rgba(200,168,75,0.32);
 }
+.rank-mode-bar {
+  display: flex;
+  justify-content: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+  padding: .65rem 1rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.rank-mode-bar button {
+  font-family: 'DM Mono', monospace;
+  font-size: .68rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  padding: .5rem 1rem;
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+  transition: all .15s;
+}
+.rank-mode-bar button:hover { color: var(--gold); border-color: rgba(200,168,75,0.45); }
+.rank-mode-bar button.active {
+  color: var(--gold-light);
+  border-color: var(--gold);
+  background: rgba(200,168,75,0.16);
+  font-weight: 600;
+}
 .lb-link {
   font-family: 'DM Mono', monospace;
   font-size: .65rem;
@@ -492,6 +521,11 @@ table.lb tr.lb-row-me .rank { color: var(--gold-light); }
   <button type="button" id="btnRefresh">Actualiser</button>
 </div>
 
+<div class="rank-mode-bar" role="tablist" aria-label="Mode de classement">
+  <button type="button" id="rankModeMatchs" class="active" role="tab" aria-selected="true">Classement matchs</button>
+  <button type="button" id="rankModeComplet" role="tab" aria-selected="false">Classement complet</button>
+</div>
+
 <main class="container">
   <div id="live-scores-root" class="live-scores-widget" aria-live="polite"></div>
 
@@ -507,15 +541,33 @@ table.lb tr.lb-row-me .rank { color: var(--gold-light); }
 <script src="js/leagues.js?v=9"></script>
 <script src="js/league-bar.js?v=9"></script>
 <script src="js/supabase-api.js"></script>
-<script src="js/scoring.js?v=5"></script>
+<script src="js/scoring.js?v=6"></script>
 <script src="js/worldcup26-api.js?v=1"></script>
 <script src="js/live-scores.js?v=14"></script>
 <script>
 const LS_EMAIL_KEY = 'cdm2026_email';
+const LS_RANK_MODE_KEY = 'cdm2026_rank_mode';
 let highlightEmail = '';
+let rankMode = 'matchs';
+let lastRows = [];
 const formatScoreCell = CDM_SCORING.formatScoreCell || ((v, vis) => (vis ? v : '—'));
 const { scoreParticipant, normalizeTeam } = CDM_SCORING;
 const FETCH_TIMEOUT_MS = 20000;
+
+function rankModeHintHtml() {
+  return rankMode === 'complet'
+    ? 'Classement <strong>complet</strong> (poules + phase finale + bonus).'
+    : 'Classement <strong>matchs</strong> (poules + phase finale, sans bonus).';
+}
+
+function sortRows(rows) {
+  const key = rankMode === 'complet' ? 'total' : 'totalSansBonus';
+  return [...rows].sort((a, b) => b[key] - a[key] || a.label.localeCompare(b.label, 'fr'));
+}
+
+function displayTotal(r) {
+  return rankMode === 'complet' ? r.total : r.totalSansBonus;
+}
 
 function monScoreHref(email) {
   if (!email) return '#';
@@ -532,16 +584,21 @@ function withTimeout(promise, ms, label) {
   ]);
 }
 
-function renderTable(rows, etape) {
+function renderTable(rows) {
   if (!rows.length) {
     return '<div class="empty"><p>Aucun participant pour le moment.</p><p style="margin-top:.75rem">Les joueurs envoient leur grille depuis l’onglet <strong>📤 Envoyer</strong>.</p></div>';
   }
+  const showBonus = rankMode === 'complet';
+  const totalLabel = showBonus ? 'Total' : 'Total matchs';
   const normHighlight = normalizeTeam(highlightEmail);
   const trs = rows.map((r, i) => {
     const detail = r.email
       ? `<a class="lb-link" href="${monScoreHref(r.email)}">Détail</a>`
       : '—';
     const isMe = normHighlight && normalizeTeam(r.email) === normHighlight;
+    const bonusCell = showBonus
+      ? `<td class="pts${r.visible?.bonusCompetition ? '' : ' pts-muted'}">${formatScoreCell(r.bonus, r.visible?.bonus)}</td>`
+      : '';
     return `
     <tr class="${isMe ? 'lb-row-me' : ''}">
       <td class="rank">${i + 1}</td>
@@ -549,19 +606,20 @@ function renderTable(rows, etape) {
       <td class="pts${r.visible?.poules ? '' : ' pts-muted'}">${formatScoreCell(r.poules, r.visible?.poules)}</td>
       <td class="pts${r.visible?.tableauE2 ? '' : ' pts-muted'}">${formatScoreCell(r.tableauE2, r.visible?.tableauE2 !== false)}</td>
       <td class="pts${r.visible?.finales ? '' : ' pts-muted'}">${formatScoreCell(r.finales, r.visible?.finales)}</td>
-      <td class="pts${r.visible?.bonusCompetition ? '' : ' pts-muted'}">${formatScoreCell(r.bonus, r.visible?.bonus)}</td>
-      <td class="pts total">${r.total}</td>
+      ${bonusCell}
+      <td class="pts total">${displayTotal(r)}</td>
       <td class="col-detail">${detail}</td>
     </tr>`;
   }).join('');
+  const bonusHead = showBonus ? '<th class="col-pts">Bonus</th>' : '';
   return `<div class="leaderboard-wrap"><table class="lb"><thead><tr>
     <th class="col-rank">#</th>
     <th class="col-name">Participant</th>
     <th class="col-pts">Poules</th>
     <th class="col-pts">Phase fin.<br>tableau</th>
     <th class="col-pts">Phase fin.<br>scores</th>
-    <th class="col-pts">Bonus</th>
-    <th class="col-pts">Total</th>
+    ${bonusHead}
+    <th class="col-pts">${totalLabel}</th>
     <th class="col-detail">Détail</th>
   </tr></thead><tbody>${trs}</tbody></table></div>`;
 }
@@ -584,10 +642,13 @@ function renderMyScoreSummary(rows) {
   const detailLink = r.email
     ? `<a class="lb-link" href="${monScoreHref(r.email)}">Détail match par match →</a>`
     : '';
+  const bonusLine = rankMode === 'complet'
+    ? ` · Bonus ${formatScoreCell(r.bonus, r.visible?.bonus)}`
+    : '';
   el.innerHTML = `
     <span class="rank-big">#${idx + 1}</span>
-    <span><strong>${escapeHtml(r.label)}</strong> <span style="color:var(--gold);font-size:.75rem">← vous</span><br><span style="color:var(--muted);font-size:.8rem">Poules ${formatScoreCell(r.poules, r.visible?.poules)} · Ph. fin. tab. ${formatScoreCell(r.tableauE2, r.visible?.tableauE2)} · Ph. fin. scores ${formatScoreCell(r.finales, r.visible?.finales)} · Bonus ${formatScoreCell(r.bonus, r.visible?.bonus)}</span></span>
-    <span class="pts-big">${r.total} pts</span>
+    <span><strong>${escapeHtml(r.label)}</strong> <span style="color:var(--gold);font-size:.75rem">← vous</span><br><span style="color:var(--muted);font-size:.8rem">Poules ${formatScoreCell(r.poules, r.visible?.poules)} · Ph. fin. tab. ${formatScoreCell(r.tableauE2, r.visible?.tableauE2)} · Ph. fin. scores ${formatScoreCell(r.finales, r.visible?.finales)}${bonusLine}</span></span>
+    <span class="pts-big">${displayTotal(r)} pts</span>
     ${detailLink}`;
   card.classList.remove('hidden');
 }
@@ -637,20 +698,21 @@ async function refresh() {
       withTimeout(loadJson('data/resultats.json'), FETCH_TIMEOUT_MS, 'Résultats'),
     ]);
     const etape = resultats.etapeDebloquee || 0;
-    const rows = participants.map(p => {
+    lastRows = participants.map(p => {
       const id = p.identite || {};
       const label = [id.prenom, id.nom].filter(Boolean).join(' ') || 'Anonyme';
       const sub = id.equipe || '';
       const sc = scoreParticipant(p, resultats);
       const email = (id.email || '').trim();
       return { label, sub, email, ...sc };
-    }).sort((a, b) => b.total - a.total || a.label.localeCompare(b.label, 'fr'));
+    });
+    const rows = sortRows(lastRows);
 
     const maj = resultats.meta?.misAJour || 'non renseignée';
     const leagueLabel = window.CDM_LEAGUE ? CDM_LEAGUE.label(CDM_LEAGUE.current()) : 'Pains sucés';
     metaEl.innerHTML = 'Ligue : <strong>' + escapeHtml(leagueLabel) + '</strong> · Étape officielle : <strong>' + etape + '</strong> · Dernière MAJ : <strong>' + escapeHtml(maj) + '</strong> — '
-      + participants.length + ' participant(s). Score progressif (0 = rien · 1 = poules · 2 = tableau · 7 = bonus compétition).';
-    content.innerHTML = renderTable(rows, etape);
+      + participants.length + ' participant(s). ' + rankModeHintHtml();
+    content.innerHTML = renderTable(rows);
     renderMyScoreSummary(rows);
     if (highlightEmail && document.querySelector('.lb-row-me')) {
       requestAnimationFrame(() => {
@@ -665,18 +727,48 @@ async function refresh() {
   }
 }
 
+function setRankMode(mode) {
+  rankMode = mode === 'complet' ? 'complet' : 'matchs';
+  try { localStorage.setItem(LS_RANK_MODE_KEY, rankMode); } catch (e) { /* ignore */ }
+  const btnMatchs = document.getElementById('rankModeMatchs');
+  const btnComplet = document.getElementById('rankModeComplet');
+  if (btnMatchs && btnComplet) {
+    btnMatchs.classList.toggle('active', rankMode === 'matchs');
+    btnComplet.classList.toggle('active', rankMode === 'complet');
+    btnMatchs.setAttribute('aria-selected', rankMode === 'matchs' ? 'true' : 'false');
+    btnComplet.setAttribute('aria-selected', rankMode === 'complet' ? 'true' : 'false');
+  }
+  if (!lastRows.length) return;
+  const rows = sortRows(lastRows);
+  document.getElementById('content').innerHTML = renderTable(rows);
+  renderMyScoreSummary(rows);
+  const metaEl = document.getElementById('metaLine');
+  if (metaEl && !metaEl.textContent.startsWith('Chargement') && metaEl.textContent !== 'Impossible de charger les données.') {
+    const html = metaEl.innerHTML;
+    const sep = html.indexOf(' participant(s). ');
+    if (sep >= 0) metaEl.innerHTML = html.slice(0, sep + 17) + rankModeHintHtml();
+  }
+}
+
 function bootClassement() {
+  try {
+    const saved = localStorage.getItem(LS_RANK_MODE_KEY);
+    if (saved === 'complet' || saved === 'matchs') rankMode = saved;
+  } catch (e) { /* ignore */ }
   highlightEmail = loadStoredEmail();
   if (window.CDM_LEAGUE_BAR) {
     CDM_LEAGUE_BAR.mount('league-bar', 'classement.html');
     CDM_LEAGUE_BAR.wireNavLinks();
   }
   if (window.CDM_LIVE_SCORES?.mount) CDM_LIVE_SCORES.mount('live-scores-root');
+  setRankMode(rankMode);
   refresh();
   setInterval(refresh, 5 * 60 * 1000);
 }
 
 document.getElementById('btnRefresh').addEventListener('click', e => { e.preventDefault(); refresh(); });
+document.getElementById('rankModeMatchs').addEventListener('click', () => setRankMode('matchs'));
+document.getElementById('rankModeComplet').addEventListener('click', () => setRankMode('complet'));
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', bootClassement);

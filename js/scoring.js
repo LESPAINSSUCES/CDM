@@ -306,13 +306,15 @@
     const tableauE2 = scoreTableauOnly(participant, resultats, etape);
     const finales = scoreEliminationKO(participant, resultats, etape);
     const bonus = scoreBonusAll(getParticipantBonus(participant), resultats, etape);
-    const total = Math.round((poules + tableauE2 + finales + bonus) * 10) / 10;
+    const totalSansBonus = Math.round((poules + tableauE2 + finales) * 10) / 10;
+    const total = Math.round((totalSansBonus + bonus) * 10) / 10;
     return {
       poules,
       tableauE2,
       finales,
       tableau: tableauE2 + finales,
       bonus,
+      totalSansBonus,
       total,
       etape,
       visible: {
