@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-06-15",
+    "misAJour": "2026-06-16",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 3,
@@ -254,8 +254,10 @@
     "Match 16": {
       "home": "Iran",
       "away": "Nouvelle Zélande",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "2",
+      "scoreAway": "2",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 40": {
       "home": "Nouvelle Zélande",
@@ -292,8 +294,10 @@
     "Match 15": {
       "home": "Arabie Saoudite",
       "away": "Uruguay",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 39": {
       "home": "Uruguay",
@@ -611,7 +615,7 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "40",
+    "nbButs": "46",
     "nbCartonsRouges": "3",
     "nbProlongations": "4",
     "nbCSC": "2"
