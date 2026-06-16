@@ -56,7 +56,7 @@
       "away": "Suisse",
       "scoreHome": "1",
       "scoreAway": "1",
-      "csc": "",
+      "csc": "1",
       "cartonsRouges": ""
     },
     "Match 26": {
@@ -618,6 +618,6 @@
     "nbButs": "46",
     "nbCartonsRouges": "3",
     "nbProlongations": "4",
-    "nbCSC": "2"
+    "nbCSC": "3"
   }
 }
