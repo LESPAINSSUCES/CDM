@@ -258,6 +258,50 @@ nav .tab-link.active { color: var(--gold); border-color: var(--gold); }
 .tv-sb-team.is-fifa-favorite .team-fifa-rank { color: var(--gold-light); }
 .tv-sb-team.is-fifa-favorite .tv-sb-name { color: var(--gold-light); }
 
+/* Votes Pain sucés (1X2 communauté) */
+.hints-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .85rem 1.1rem;
+}
+.poule-votes-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: .35rem .5rem;
+  margin-top: .45rem;
+  padding-top: .45rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  font-family: 'DM Mono', monospace;
+  font-size: .68rem;
+  letter-spacing: .03em;
+  color: var(--muted);
+  line-height: 1.35;
+}
+.poule-votes-line[hidden] { display: none !important; }
+.poule-votes-counts {
+  display: inline-flex;
+  align-items: center;
+  gap: .28rem;
+  color: var(--text);
+}
+.poule-votes-counts .pv-h,
+.poule-votes-counts .pv-d,
+.poule-votes-counts .pv-a {
+  min-width: 1.1rem;
+  text-align: center;
+}
+.poule-votes-counts .pv-h.is-leader,
+.poule-votes-counts .pv-d.is-leader,
+.poule-votes-counts .pv-a.is-leader {
+  color: var(--gold-light);
+  font-weight: 600;
+}
+.poule-votes-sep { opacity: .45; }
+.poule-votes-meta { font-size: .62rem; opacity: .85; }
+
 .send-recap-card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -2273,11 +2317,17 @@ body.grille-remote-locked #player-code-input {
   <h2 class="section-title">Phase de Groupes — 72 matchs</h2>
   <div class="stage-lock-banner" id="poules-lock-banner" hidden>🔒 Phase de groupes verrouillée — l’organisateur a publié l’étape 1 (consultation seule).</div>
   <div class="fifa-hints-bar">
-    <label class="fifa-hints-toggle">
-      <input type="checkbox" id="fifa-hints-toggle" checked>
-      <span>Indices FIFA</span>
-    </label>
-    <span>Classement mondial (1 avr. 2026) — plus le <strong style="color:var(--gold-light)">#</strong> est bas, plus l’équipe est favorie.</span>
+    <div class="hints-toggles">
+      <label class="fifa-hints-toggle">
+        <input type="checkbox" id="fifa-hints-toggle" checked>
+        <span>Indices FIFA</span>
+      </label>
+      <label class="fifa-hints-toggle">
+        <input type="checkbox" id="poule-votes-toggle" checked>
+        <span>Votes Pain sucés</span>
+      </label>
+    </div>
+    <span>Pronostics des inscrits : <strong style="color:var(--text)">domicile · nul · extérieur</strong> (sur le total inscrits). Indices FIFA : <strong style="color:var(--gold-light)">#</strong> classement mondial.</span>
   </div>
   <div class="incomplete-banner" id="poules-banner"><div class="dot" id="poules-dot"></div><span id="poules-banner-text">Touchez un chiffre pour chaque équipe (0–4, ou Plus pour 5+)</span></div>
   <div class="progress-bar"><div class="progress-fill" id="poules-progress" style="width:0%"></div></div>
@@ -2537,6 +2587,7 @@ body.grille-remote-locked #player-code-input {
 <script src="js/league-bar.js?v=9"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/fifa-rankings.js"></script>
+<script src="js/poule-votes.js"></script>
 <script src="js/scoring.js?v=5"></script>
 <script>
 // ─── DATA ────────────────────────────────────────────────────────────────────
@@ -2667,6 +2718,80 @@ function wireFifaHintsToggle() {
   if (!el) return;
   el.checked = fifaHintsEnabled();
   el.addEventListener('change', () => setFifaHintsEnabled(el.checked));
+}
+
+const POULE_VOTES_LS = 'cdm2026_poule_votes';
+
+function pouleVotesEnabled() {
+  try {
+    const raw = localStorage.getItem(POULE_VOTES_LS);
+    if (raw === null) return true;
+    return raw === '1';
+  } catch (e) {
+    return true;
+  }
+}
+
+function setPouleVotesEnabled(on) {
+  try { localStorage.setItem(POULE_VOTES_LS, on ? '1' : '0'); } catch (e) { /* ignore */ }
+  refreshPouleVoteLabels();
+}
+
+function buildPouleVotesLineHtml(num, home, away) {
+  return `<div class="poule-votes-line" data-match="${num}" hidden aria-label="Votes Pain sucés match ${num}">
+    <span class="poule-votes-counts">
+      <span class="pv-h" title="${escapeAttr(home)}">—</span><span class="poule-votes-sep">·</span><span class="pv-d" title="Nul">—</span><span class="poule-votes-sep">·</span><span class="pv-a" title="${escapeAttr(away)}">—</span>
+    </span>
+    <span class="poule-votes-meta">sur 0 inscrits</span>
+  </div>`;
+}
+
+function refreshPouleVoteLabels() {
+  const show = pouleVotesEnabled();
+  const total = window.CDM_POULE_VOTES?.getTotalInscrits?.() || 0;
+  const canShow = show && total > 0;
+  const inscritLabel = total === 1 ? 'inscrit' : 'inscrits';
+  document.querySelectorAll('.poule-votes-line').forEach(el => {
+    const num = Number(el.dataset.match);
+    const counts = window.CDM_POULE_VOTES?.getMatchVotes?.(num) || { H: 0, D: 0, A: 0 };
+    const hEl = el.querySelector('.pv-h');
+    const dEl = el.querySelector('.pv-d');
+    const aEl = el.querySelector('.pv-a');
+    if (hEl) hEl.textContent = String(counts.H);
+    if (dEl) dEl.textContent = String(counts.D);
+    if (aEl) aEl.textContent = String(counts.A);
+    const meta = el.querySelector('.poule-votes-meta');
+    if (meta) meta.textContent = 'sur ' + total + ' ' + inscritLabel;
+    hEl?.classList.remove('is-leader');
+    dEl?.classList.remove('is-leader');
+    aEl?.classList.remove('is-leader');
+    const max = Math.max(counts.H, counts.D, counts.A);
+    if (max > 0) {
+      if (counts.H === max) hEl?.classList.add('is-leader');
+      if (counts.D === max) dEl?.classList.add('is-leader');
+      if (counts.A === max) aEl?.classList.add('is-leader');
+    }
+    el.hidden = !canShow;
+  });
+}
+
+async function loadPouleVotes() {
+  if (!window.CDM_POULE_VOTES?.refresh) return;
+  await CDM_POULE_VOTES.refresh();
+  refreshPouleVoteLabels();
+}
+
+function wirePouleVotesToggle() {
+  const el = document.getElementById('poule-votes-toggle');
+  if (!el) return;
+  if (!window.CDM_SUPABASE?.isConfigured?.()) {
+    el.checked = false;
+    el.disabled = true;
+    el.closest('label')?.setAttribute('title', 'Supabase requis pour charger les votes');
+    return;
+  }
+  el.checked = pouleVotesEnabled();
+  el.addEventListener('change', () => setPouleVotesEnabled(el.checked));
 }
 
 async function refreshInviteGate() {
@@ -4501,6 +4626,7 @@ function buildGroups() {
         <div class="tv-board match-card incomplete" data-match="${num}" data-home="${escapeAttr(home)}" data-away="${escapeAttr(away)}">
           ${buildScoreboardHTML('display-m' + num, home, away)}
           ${buildTvScoreRow(keyH, keyA, 'group', home, away)}
+          ${buildPouleVotesLineHtml(num, home, away)}
         </div>`;
       body.appendChild(row);
     }
@@ -5477,6 +5603,7 @@ async function submitGrille() {
     setDraftCloudStatus('ok');
     syncRemoteGrilleUI();
     showToast('✅ Grille envoyée — visible au classement');
+    loadPouleVotes();
   } catch (e) {
     showToast('Échec envoi : ' + e.message, true);
   } finally {
@@ -5490,6 +5617,9 @@ buildGroups();
 populateSelects();
 wireBonusOtherPickers();
 wireFifaHintsToggle();
+wirePouleVotesToggle();
+loadPouleVotes();
+setInterval(loadPouleVotes, 5 * 60 * 1000);
 applyLeagueBadge();
 initScoreSheet();
 loadState();
