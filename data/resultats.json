@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-06-16",
+    "misAJour": "2026-06-17",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 3,
@@ -334,8 +334,10 @@
     "Match 18": {
       "home": "Irak",
       "away": "Norvège",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "4",
+      "csc": "1",
+      "cartonsRouges": ""
     },
     "Match 43": {
       "home": "Norvège",
@@ -364,14 +366,18 @@
     "Match 19": {
       "home": "Argentine",
       "away": "Algérie",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "3",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 20": {
       "home": "Autriche",
       "away": "Jordanie",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "3",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 44": {
       "home": "Jordanie",
@@ -617,9 +623,9 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "50",
+    "nbButs": "62",
     "nbCartonsRouges": "3",
     "nbProlongations": "4",
-    "nbCSC": "3"
+    "nbCSC": "4"
   }
 }
