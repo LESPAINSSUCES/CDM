@@ -22,8 +22,10 @@
     "Match 25": {
       "home": "Rép. Tchèque",
       "away": "Afrique du Sud",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 28": {
       "home": "Mexique",
@@ -62,8 +64,10 @@
     "Match 26": {
       "home": "Suisse",
       "away": "Bosnie Herzégovine",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "4",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": "1"
     },
     "Match 27": {
       "home": "Canada",
@@ -631,8 +635,8 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "75",
-    "nbCartonsRouges": "3",
+    "nbButs": "82",
+    "nbCartonsRouges": "4",
     "nbProlongations": "4",
     "nbCSC": "4"
   }
