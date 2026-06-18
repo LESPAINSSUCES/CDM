@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-06-17",
+    "misAJour": "2026-06-18",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 3,
@@ -406,14 +406,18 @@
     "Match 21": {
       "home": "Portugal",
       "away": "RD Congo",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 24": {
       "home": "Ouzbékistan",
       "away": "Colombie",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "3",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 48": {
       "home": "Colombie",
@@ -442,14 +446,18 @@
     "Match 22": {
       "home": "Angleterre",
       "away": "Croatie",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "4",
+      "scoreAway": "2",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 23": {
       "home": "Ghana",
       "away": "Panama",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 47": {
       "home": "Panama",
@@ -623,7 +631,7 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "62",
+    "nbButs": "75",
     "nbCartonsRouges": "3",
     "nbProlongations": "4",
     "nbCSC": "4"
