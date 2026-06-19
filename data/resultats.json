@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-06-18",
+    "misAJour": "2026-06-19",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 3,
@@ -30,8 +30,10 @@
     "Match 28": {
       "home": "Mexique",
       "away": "Corée du Sud",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 53": {
       "home": "Rép. Tchèque",
@@ -72,8 +74,10 @@
     "Match 27": {
       "home": "Canada",
       "away": "Qatar",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "6",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": "2"
     },
     "Match 49": {
       "home": "Suisse",
@@ -635,8 +639,8 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "82",
-    "nbCartonsRouges": "4",
+    "nbButs": "89",
+    "nbCartonsRouges": "6",
     "nbProlongations": "4",
     "nbCSC": "4"
   }
