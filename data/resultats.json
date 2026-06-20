@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-06-19",
+    "misAJour": "2026-06-20",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 3,
@@ -110,14 +110,18 @@
     "Match 30": {
       "home": "Écosse",
       "away": "Maroc",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "0",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 31": {
       "home": "Brésil",
       "away": "Haïti",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "3",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 51": {
       "home": "Écosse",
@@ -150,14 +154,18 @@
     "Match 32": {
       "home": "Turquie",
       "away": "Paraguay",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "0",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 29": {
       "home": "États-Unis",
       "away": "Australie",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "2",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 59": {
       "home": "Turquie",
@@ -639,7 +647,7 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "89",
+    "nbButs": "96",
     "nbCartonsRouges": "6",
     "nbProlongations": "4",
     "nbCSC": "4"
