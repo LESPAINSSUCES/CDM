@@ -157,14 +157,14 @@
       "scoreHome": "0",
       "scoreAway": "1",
       "csc": "",
-      "cartonsRouges": ""
+      "cartonsRouges": "1"
     },
     "Match 29": {
       "home": "États-Unis",
       "away": "Australie",
       "scoreHome": "2",
       "scoreAway": "0",
-      "csc": "",
+      "csc": "1",
       "cartonsRouges": ""
     },
     "Match 59": {
@@ -648,8 +648,8 @@
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
     "nbButs": "96",
-    "nbCartonsRouges": "6",
+    "nbCartonsRouges": "7",
     "nbProlongations": "4",
-    "nbCSC": "4"
+    "nbCSC": "5"
   }
 }
