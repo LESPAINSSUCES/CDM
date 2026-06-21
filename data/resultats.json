@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-06-20",
+    "misAJour": "2026-06-21",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 3,
@@ -198,14 +198,18 @@
     "Match 35": {
       "home": "Équateur",
       "away": "Curacao",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "0",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 34": {
       "home": "Allemagne",
       "away": "Côte d'Ivoire",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "2",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 55": {
       "home": "Équateur",
@@ -238,14 +242,18 @@
     "Match 36": {
       "home": "Tunisie",
       "away": "Japon",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "0",
+      "scoreAway": "4",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 33": {
       "home": "Pays-Bas",
       "away": "Suède",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "5",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 57": {
       "home": "Tunisie",
@@ -647,7 +655,7 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "96",
+    "nbButs": "109",
     "nbCartonsRouges": "7",
     "nbProlongations": "4",
     "nbCSC": "5"
