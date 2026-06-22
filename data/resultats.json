@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-06-21",
+    "misAJour": "2026-06-22",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 3,
@@ -286,14 +286,18 @@
     "Match 40": {
       "home": "Nouvelle Zélande",
       "away": "Égypte",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "3",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 38": {
       "home": "Belgique",
       "away": "Iran",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "0",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": "1"
     },
     "Match 65": {
       "home": "Nouvelle Zélande",
@@ -326,14 +330,18 @@
     "Match 39": {
       "home": "Uruguay",
       "away": "Cap Vert",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "2",
+      "scoreAway": "2",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 37": {
       "home": "Espagne",
       "away": "Arabie Saoudite",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "4",
+      "scoreAway": "0",
+      "csc": "1",
+      "cartonsRouges": ""
     },
     "Match 63": {
       "home": "Uruguay",
@@ -655,9 +663,9 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "109",
-    "nbCartonsRouges": "7",
+    "nbButs": "121",
+    "nbCartonsRouges": "8",
     "nbProlongations": "4",
-    "nbCSC": "5"
+    "nbCSC": "6"
   }
 }
