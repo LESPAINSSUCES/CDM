@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-06-22",
+    "misAJour": "2026-06-23",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 3,
@@ -374,14 +374,18 @@
     "Match 43": {
       "home": "Norvège",
       "away": "Sénégal",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "3",
+      "scoreAway": "2",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 42": {
       "home": "France",
       "away": "Irak",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "3",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 61": {
       "home": "Norvège",
@@ -414,14 +418,18 @@
     "Match 44": {
       "home": "Jordanie",
       "away": "Algérie",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "2",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 41": {
       "home": "Argentine",
       "away": "Autriche",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "2",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 71": {
       "home": "Jordanie",
@@ -460,8 +468,10 @@
     "Match 45": {
       "home": "Portugal",
       "away": "Ouzbékistan",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "5",
+      "scoreAway": "0",
+      "csc": "1",
+      "cartonsRouges": ""
     },
     "Match 69": {
       "home": "Colombie",
@@ -663,9 +673,9 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "121",
+    "nbButs": "139",
     "nbCartonsRouges": "8",
     "nbProlongations": "4",
-    "nbCSC": "6"
+    "nbCSC": "7"
   }
 }
