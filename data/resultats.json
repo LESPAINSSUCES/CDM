@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-06-23",
+    "misAJour": "2026-06-24",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 3,
@@ -462,8 +462,10 @@
     "Match 48": {
       "home": "Colombie",
       "away": "RD Congo",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 45": {
       "home": "Portugal",
@@ -504,14 +506,18 @@
     "Match 47": {
       "home": "Panama",
       "away": "Croatie",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "0",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 46": {
       "home": "Angleterre",
       "away": "Ghana",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "0",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 67": {
       "home": "Panama",
@@ -673,7 +679,7 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "139",
+    "nbButs": "141",
     "nbCartonsRouges": "8",
     "nbProlongations": "4",
     "nbCSC": "7"
