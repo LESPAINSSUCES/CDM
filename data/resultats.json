@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-06-25",
+    "misAJour": "2026-06-26",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 3,
@@ -182,14 +182,18 @@
     "Match 59": {
       "home": "Turquie",
       "away": "États-Unis",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "3",
+      "scoreAway": "2",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 60": {
       "home": "Paraguay",
       "away": "Australie",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "0",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 9": {
       "home": "Allemagne",
@@ -226,14 +230,18 @@
     "Match 55": {
       "home": "Équateur",
       "away": "Allemagne",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "2",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 56": {
       "home": "Curacao",
       "away": "Côte d'Ivoire",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "0",
+      "scoreAway": "2",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 10": {
       "home": "Pays-Bas",
@@ -270,14 +278,18 @@
     "Match 57": {
       "home": "Tunisie",
       "away": "Pays-Bas",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "3",
+      "csc": "1",
+      "cartonsRouges": ""
     },
     "Match 58": {
       "home": "Japon",
       "away": "Suède",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 14": {
       "home": "Belgique",
@@ -691,9 +703,9 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "161",
+    "nbButs": "177",
     "nbCartonsRouges": "8",
     "nbProlongations": "4",
-    "nbCSC": "9"
+    "nbCSC": "10"
   }
 }
