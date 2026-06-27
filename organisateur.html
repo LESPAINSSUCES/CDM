@@ -600,10 +600,72 @@ function setPouleScore(num, home, away, sh, sa) {
   setPouleMatchFields(num, home, away, { scoreHome: sh, scoreAway: sa });
 }
 
-function getKoTeams(mid) {
+function getKoTeamsStored(mid) {
   const k = String(mid);
   const m = state.matchsEliminationOfficiels?.[k] || state.matchsEliminationOfficiels?.['M' + mid] || {};
   return [m.home || '', m.away || ''];
+}
+
+function koWinnerMap() {
+  const winners = {};
+  for (let m = 73; m <= 104; m++) {
+    const w = koWinnerFromScores(m);
+    if (w) winners[m] = w;
+  }
+  return winners;
+}
+
+function setKoMatchTeams(mid, home, away) {
+  if (!state.matchsEliminationOfficiels) state.matchsEliminationOfficiels = {};
+  const k = String(mid);
+  if (!state.matchsEliminationOfficiels[k]) state.matchsEliminationOfficiels[k] = { home: '', away: '' };
+  state.matchsEliminationOfficiels[k].home = home || '';
+  state.matchsEliminationOfficiels[k].away = away || '';
+}
+
+function deriveKoTeamsFromWinners(mid, winners) {
+  mid = Number(mid);
+  const w = (m) => winners[m] || '';
+  const loser = (m) => {
+    const win = w(m);
+    const [h, a] = getKoTeamsStored(m);
+    if (!win || !h || !a) return '';
+    return win === h ? a : h;
+  };
+  if (mid >= 73 && mid <= 88) {
+    const side = engineCache.R32_SIDE?.[mid];
+    if (side?.left && side?.right) return [side.left, side.right];
+    const s = state.seiziemeParMatchR32?.['M' + mid];
+    if (s?.left && s?.right) return [s.left, s.right];
+    return getKoTeamsStored(mid);
+  }
+  if (KO_R16[mid]) return [w(KO_R16[mid][0]), w(KO_R16[mid][1])];
+  if (KO_QF[mid]) return [w(KO_QF[mid][0]), w(KO_QF[mid][1])];
+  if (KO_SF[mid]) return [w(KO_SF[mid][0]), w(KO_SF[mid][1])];
+  if (mid === 104) return [w(101), w(102)];
+  if (mid === 103) return [loser(101), loser(102)];
+  return ['', ''];
+}
+
+function syncMatchsEliminationOfficielsFromDerived() {
+  if (!state.matchsEliminationOfficiels) state.matchsEliminationOfficiels = {};
+  const winners = koWinnerMap();
+  if (engineCache.allComplete) {
+    KNOCK_R32_DEF.forEach(def => {
+      const side = engineCache.R32_SIDE[def.m] || {};
+      setKoMatchTeams(def.m, side.left || '', side.right || '');
+    });
+  }
+  [89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104].forEach(m => {
+    const [h, a] = deriveKoTeamsFromWinners(m, winners);
+    if (h || a) setKoMatchTeams(m, h, a);
+  });
+}
+
+function getKoTeams(mid) {
+  const stored = getKoTeamsStored(mid);
+  if (stored[0] && stored[1]) return stored;
+  return deriveKoTeamsFromWinners(mid, koWinnerMap());
 }
 
 function getKoScore(mid) {
@@ -867,8 +929,31 @@ function syncDerivedFields() {
     troisiemePlaceChoix: third,
     vainqueurFinal: winner,
   };
+  syncMatchsEliminationOfficielsFromDerived();
+  refreshDerivedKoUI();
   syncBonusFromMatchStats();
   updateMatchStatsBars();
+}
+
+function refreshDerivedKoUI() {
+  const matchRoot = document.getElementById('match-sections');
+  if (matchRoot) {
+    matchRoot.querySelectorAll('input[data-mid]').forEach(inp => {
+      const mid = Number(inp.dataset.mid);
+      const [home, away] = getKoTeams(mid);
+      inp.value = inp.dataset.side === 'home' ? (home || '') : (away || '');
+    });
+  }
+  const koRoot = document.getElementById('ko-scores-root');
+  if (koRoot) {
+    koRoot.querySelectorAll('.match-row[data-ko-mid]').forEach(row => {
+      const mid = Number(row.dataset.koMid);
+      const [home, away] = getKoTeams(mid);
+      const spans = row.querySelectorAll('.teams');
+      if (spans[0]) spans[0].textContent = home || '—';
+      if (spans[1]) spans[1].textContent = away || '—';
+    });
+  }
 }
 
 function updateUndoUI() {
@@ -1820,6 +1905,7 @@ function showAdmin() {
   document.getElementById('login-panel').classList.add('hidden');
   document.getElementById('admin-panel').classList.remove('hidden');
   document.getElementById('sticky-bar').classList.remove('hidden');
+  syncDerivedFields();
   renderAll();
   updateUndoUI();
   updateTokenStatus();

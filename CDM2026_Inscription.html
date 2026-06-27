@@ -2078,6 +2078,75 @@ function buildPhaseFinalePourBareme() {
   };
 }
 
+function officialKoWinner(mid) {
+  const keys = [String(mid), 'M' + mid];
+  for (const k of keys) {
+    const w = OFFICIAL.vainqueursTableauElimination?.[k];
+    if (w) return w;
+  }
+  for (const k of keys) {
+    const sc = OFFICIAL.scoresElimination?.[k];
+    if (!sc) continue;
+    const home = sc.home || sc.homeTeam || sc.equipe1 || '';
+    const away = sc.away || sc.awayTeam || sc.equipe2 || '';
+    const h = parseScoreVal(sc.scoreHome);
+    const a = parseScoreVal(sc.scoreAway);
+    if (!Number.isFinite(h) || !Number.isFinite(a) || !home || !away) continue;
+    if (h > a) return home;
+    if (a > h) return away;
+  }
+  return '';
+}
+
+function getOfficialKoTeamsStored(mid) {
+  const keys = [String(mid), 'M' + mid, 'Match ' + mid];
+  for (const k of keys) {
+    const m = OFFICIAL.matchsEliminationOfficiels?.[k];
+    if (!m) continue;
+    const home = m.home || m.left || m.homeTeam || m.equipe1 || '';
+    const away = m.away || m.right || m.awayTeam || m.equipe2 || '';
+    if (home && away) return [home, away];
+  }
+  return ['', ''];
+}
+
+function resolveOfficialKoTeams(mid, winners, memo) {
+  mid = Number(mid);
+  if (memo[mid]) return memo[mid];
+  const stored = getOfficialKoTeamsStored(mid);
+  if (stored[0] && stored[1]) {
+    memo[mid] = stored;
+    return stored;
+  }
+  const w = (m) => winners[m] || '';
+  let teams = ['', ''];
+  if (mid >= 73 && mid <= 88) {
+    const s = OFFICIAL.seiziemeParMatchR32?.['M' + mid];
+    if (s?.left && s?.right) teams = [s.left, s.right];
+  } else if (KO_R16[mid]) {
+    const [a, b] = KO_R16[mid];
+    teams = [w(a), w(b)];
+  } else if (KO_QF[mid]) {
+    const [a, b] = KO_QF[mid];
+    teams = [w(a), w(b)];
+  } else if (KO_SF[mid]) {
+    const [a, b] = KO_SF[mid];
+    teams = [w(a), w(b)];
+  } else if (mid === 104) {
+    teams = [w(101), w(102)];
+  } else if (mid === 103) {
+    const [h101, a101] = resolveOfficialKoTeams(101, winners, memo);
+    const [h102, a102] = resolveOfficialKoTeams(102, winners, memo);
+    const win101 = w(101);
+    const win102 = w(102);
+    const l101 = win101 && h101 && a101 ? (win101 === h101 ? a101 : h101) : '';
+    const l102 = win102 && h102 && a102 ? (win102 === h102 ? a102 : h102) : '';
+    teams = [l101, l102];
+  }
+  memo[mid] = teams;
+  return teams;
+}
+
 function getOfficialMatchTeams(mid) {
   mid = Number(mid);
   const keys = [String(mid), 'M' + mid, 'Match ' + mid];
@@ -2091,6 +2160,13 @@ function getOfficialMatchTeams(mid) {
   }
   const s = OFFICIAL.seiziemeParMatchR32?.['M' + mid];
   if (s?.left && s?.right) return [s.left, s.right];
+  const winners = {};
+  for (let m = 73; m <= 104; m++) {
+    const w = officialKoWinner(m);
+    if (w) winners[m] = w;
+  }
+  const [h, a] = resolveOfficialKoTeams(mid, winners, {});
+  if (h && a) return [h, a];
   return ['', ''];
 }
 
