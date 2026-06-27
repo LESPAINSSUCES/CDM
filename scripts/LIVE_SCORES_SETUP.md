@@ -27,6 +27,9 @@ Test : `https://qpkiwausbvedzmovfvxe.supabase.co/functions/v1/live-scores`
 Import organisateur (48 h, poules vides) :  
 `…/live-scores?window=48h` → matchs poules **terminés ou live** des **48 dernières heures**.
 
+Import affrontements / scores KO :  
+`…/live-scores?scope=knockout` → tous les matchs M73–M104 avec équipes confirmées FIFA.
+
 **Redéployez** `live-scores` après toute mise à jour de `index.ts`.
 
 ## Fichiers site
@@ -41,3 +44,12 @@ Onglet **Poules** → **Importer scores du jour (live)** :
 - Fenêtre **48 h** (terminés + en cours)
 - Seulement les champs poules **encore vides**
 - Vérifiez puis **Publier resultats.json**
+
+Onglet **Phase finale — tableau** → **Importer affrontements FIFA** :
+- Source worldcup26 (M73–M104, équipes confirmées uniquement)
+- Seulement les affrontements **encore vides**
+- Publiez + **étape 3** pour que les joueurs pronostiquent les seizièmes
+
+Onglet **Phase finale — scores** → **Importer scores KO (live)** :
+- Matchs KO terminés ou en cours, scores vides uniquement
+- Complète aussi le tableau si une équipe manquait

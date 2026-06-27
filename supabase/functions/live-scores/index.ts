@@ -40,6 +40,21 @@ serve(async (req) => {
     if (!res.ok) throw new Error(`worldcup26 HTTP ${res.status}`);
     const data = await res.json();
     const games: WcGame[] = data?.games || [];
+    const scope = (reqUrl.searchParams.get('scope') || '').trim().toLowerCase();
+
+    if (scope === 'knockout') {
+      const ko = games
+        .filter((g) => !isGroupGame(g))
+        .sort((a, b) => parseInt(String(a.id || '0'), 10) - parseInt(String(b.id || '0'), 10));
+      return json({
+        fixtures: ko.map(normalizeGame),
+        fetchedAt,
+        count: ko.length,
+        source: 'worldcup26.ir',
+        scope: 'knockout',
+      });
+    }
+
     const picked = windowHours > 0 ? pickWindowGames(games, windowHours) : pickTodayGames(games);
     const fixtures = picked.map(normalizeGame);
 
@@ -138,9 +153,23 @@ function sortGames(games: WcGame[]): WcGame[] {
   });
 }
 
+function resolveTeamName(g: WcGame, side: 'home' | 'away'): string {
+  const id = side === 'home' ? g.home_team_id : g.away_team_id;
+  const nameEn = side === 'home' ? g.home_team_name_en : g.away_team_name_en;
+  const label = side === 'home' ? g.home_team_label : g.away_team_label;
+  if (nameEn && String(id || '0') !== '0') return nameEn;
+  if (nameEn && !isPlaceholderLabel(nameEn)) return nameEn;
+  return label || nameEn || '—';
+}
+
+function isPlaceholderLabel(s: string): boolean {
+  return /^(Winner|Runner-up|Runner up|Loser|3rd|2nd|TBD)/i.test(String(s || '').trim())
+    || /\bGroup [A-L]\b/i.test(String(s || ''));
+}
+
 function normalizeGame(g: WcGame) {
-  const home = g.home_team_name_en || g.home_team_label || '—';
-  const away = g.away_team_name_en || g.away_team_label || '—';
+  const home = resolveTeamName(g, 'home');
+  const away = resolveTeamName(g, 'away');
   const hs = parseInt(String(g.home_score ?? ''), 10);
   const as = parseInt(String(g.away_score ?? ''), 10);
   const hasScore = !Number.isNaN(hs) && !Number.isNaN(as);
@@ -166,6 +195,9 @@ function normalizeGame(g: WcGame) {
     league: { id: 1, name: 'World Cup' },
     group: g.group || '',
     matchId: g.id || '',
+    koType: g.type || '',
+    homeTeamId: g.home_team_id || '0',
+    awayTeamId: g.away_team_id || '0',
     localDate: g.local_date || '',
     stadiumId: g.stadium_id || '',
     scorers: { home: g.home_scorers, away: g.away_scorers },

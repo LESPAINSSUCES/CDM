@@ -118,8 +118,35 @@
       isFinished: short === 'FT' || short === 'AET' || short === 'PEN',
       group: f.group || '',
       matchId: f.matchId || '',
+      koType: f.koType || '',
+      homeTeamId: f.homeTeamId || '0',
+      awayTeamId: f.awayTeamId || '0',
       raw: f,
     };
+  }
+
+  function isPlaceholderTeam(name) {
+    const s = String(name || '').trim();
+    if (!s || s === '—') return true;
+    return /^(Winner|Runner-up|Runner up|Runner-Up|Loser|3rd|2nd|Winner Match|Loser Match|TBD)/i.test(s)
+      || /\bGroup [A-L]\b/i.test(s)
+      || /^3rd Group/i.test(s);
+  }
+
+  function isRealKoTeam(name) {
+    const n = teamLabel(name);
+    return !!n && !isPlaceholderTeam(n);
+  }
+
+  function koTypeLabel(koType) {
+    const t = String(koType || '').toLowerCase();
+    if (t === 'r32') return 'Seizième';
+    if (t === 'r16') return 'Huitième';
+    if (t === 'qf') return 'Quart';
+    if (t === 'sf') return 'Demi';
+    if (t === 'third') return 'Petite finale';
+    if (t === 'final') return 'Finale';
+    return t || 'KO';
   }
 
   async function fetchLiveFixtures(options = {}) {
@@ -142,6 +169,7 @@
         const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
         const qs = new URLSearchParams({ t: String(Date.now()) });
         if (options.windowHours > 0) qs.set('window', String(options.windowHours) + 'h');
+        if (options.scope) qs.set('scope', String(options.scope));
         const sep = proxyUrl.includes('?') ? '&' : '?';
         const url = proxyUrl + sep + qs.toString();
         const res = await fetch(url, { headers, signal: controller.signal });
@@ -240,13 +268,92 @@
     return out;
   }
 
+  /**
+   * Affrontements KO (M73–M104) depuis worldcup26 — équipes réelles uniquement.
+   */
+  function proposeKoTeamImports(fixtures, opts = {}) {
+    const minMid = opts.minMid ?? 73;
+    const maxMid = opts.maxMid ?? 104;
+    const onlyEmpty = opts.onlyEmpty !== false;
+    const isSlotEmpty = typeof opts.isSlotEmpty === 'function' ? opts.isSlotEmpty : null;
+    const out = [];
+
+    fixtures.forEach((fx) => {
+      const mid = parseInt(String(fx.matchId || ''), 10);
+      if (!Number.isFinite(mid) || mid < minMid || mid > maxMid) return;
+      const home = teamLabel(fx.home);
+      const away = teamLabel(fx.away);
+      if (!isRealKoTeam(home) || !isRealKoTeam(away)) return;
+      if (onlyEmpty && isSlotEmpty && !isSlotEmpty(mid)) return;
+      out.push({
+        mid,
+        home,
+        away,
+        koType: fx.koType || '',
+        sourceLabel: koTypeLabel(fx.koType),
+      });
+    });
+
+    out.sort((a, b) => a.mid - b.mid);
+    return out;
+  }
+
+  /**
+   * Scores KO terminés / live (M73–M104).
+   */
+  function proposeKoScoreImports(fixtures, opts = {}) {
+    const minMid = opts.minMid ?? 73;
+    const maxMid = opts.maxMid ?? 104;
+    const includeLive = opts.includeLive !== false;
+    const onlyFinished = opts.onlyFinished === true;
+    const onlyEmpty = opts.onlyEmpty !== false;
+    const isScoreEmpty = typeof opts.isScoreEmpty === 'function' ? opts.isScoreEmpty : null;
+    const out = [];
+
+    fixtures.forEach((fx) => {
+      const mid = parseInt(String(fx.matchId || ''), 10);
+      if (!Number.isFinite(mid) || mid < minMid || mid > maxMid) return;
+      if (fx.scoreHome == null || fx.scoreAway == null) return;
+      if (!isRealKoTeam(fx.home) || !isRealKoTeam(fx.away)) return;
+      if (onlyFinished && !fx.isFinished) return;
+      if (!includeLive && fx.isLive && !fx.isFinished) return;
+      if (!fx.isLive && !fx.isFinished) return;
+      if (onlyEmpty && isScoreEmpty && !isScoreEmpty(mid)) return;
+
+      out.push({
+        mid,
+        home: teamLabel(fx.home),
+        away: teamLabel(fx.away),
+        scoreHome: fx.scoreHome,
+        scoreAway: fx.scoreAway,
+        koType: fx.koType || '',
+        isLive: fx.isLive && !fx.isFinished,
+        isFinished: fx.isFinished,
+        sourceLabel: fx.isLive && !fx.isFinished ? 'En cours' : 'Terminé',
+      });
+    });
+
+    out.sort((a, b) => a.mid - b.mid);
+    return out;
+  }
+
+  async function fetchKnockoutFixtures(options = {}) {
+    return fetchLiveFixtures({ ...options, scope: 'knockout', windowHours: 0 });
+  }
+
   global.CDM_WC26 = {
     teamLabel,
     normTeam,
     getProxyUrl,
     fetchLiveFixtures,
+    fetchKnockoutFixtures,
     buildPouleIndex,
     proposePouleImports,
+    proposeKoTeamImports,
+    proposeKoScoreImports,
+    isPlaceholderTeam,
+    isRealKoTeam,
+    koTypeLabel,
     friendlyFetchError,
   };
 })(window);

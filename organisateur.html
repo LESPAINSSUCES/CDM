@@ -294,6 +294,11 @@ input[type="number"].stat-in { width: 2.1rem; text-align: center; padding: .35re
     <div id="panel-ko-teams" class="org-panel card">
       <h2>Phase finale — tableau (officiel)</h2>
       <p class="hint">Affrontements réels M73–M104 avant de débloquer l’étape correspondante.</p>
+      <div class="actions import-bar">
+        <button type="button" class="btn btn-primary" id="btn-import-ko-teams">Importer affrontements FIFA</button>
+      </div>
+      <p class="hint">Préremplit les champs <strong>vides</strong> depuis worldcup26 (équipes confirmées seulement) — vérifiez puis publiez.</p>
+      <p class="err hidden" id="import-ko-teams-status"></p>
       <div id="match-sections"></div>
       <div class="reset-bar">
         <div class="actions">
@@ -306,6 +311,11 @@ input[type="number"].stat-in { width: 2.1rem; text-align: center; padding: .35re
     <div id="panel-ko-scores" class="org-panel card">
       <h2>Phase finale — scores (officiel)</h2>
       <p class="hint">Scores réels M73–M104 + CSC / CR par match. En cas d’égalité, indiquez le vainqueur aux tirs au but.</p>
+      <div class="actions import-bar">
+        <button type="button" class="btn btn-primary" id="btn-import-ko-scores">Importer scores KO (live)</button>
+      </div>
+      <p class="hint">Matchs KO <strong>terminés ou en cours</strong> avec équipes confirmées — champs scores vides uniquement.</p>
+      <p class="err hidden" id="import-ko-scores-status"></p>
       <div id="ko-stats-bar" class="stats-bar" aria-live="polite"></div>
       <div id="ko-scores-root"></div>
       <div class="reset-bar">
@@ -385,7 +395,7 @@ input[type="number"].stat-in { width: 2.1rem; text-align: center; padding: .35re
     <div id="import-live-list" class="import-live-list"></div>
     <label class="check-row">
       <input type="checkbox" id="import-overwrite">
-      <span>Remplacer les scores déjà saisis pour les matchs cochés</span>
+      <span id="import-overwrite-label">Remplacer les scores déjà saisis pour les matchs cochés</span>
     </label>
     <div class="confirm-actions">
       <button type="button" class="btn" id="import-cancel">Annuler</button>
@@ -414,7 +424,7 @@ input[type="number"].stat-in { width: 2.1rem; text-align: center; padding: .35re
 </div>
 
 <script src="js/config.js"></script>
-<script src="js/worldcup26-api.js?v=2"></script>
+<script src="js/worldcup26-api.js?v=3"></script>
 <script src="js/leagues.js"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/seed-demo-grilles.js"></script>
@@ -511,6 +521,7 @@ let engineCache = { R32_SIDE: {}, list32: [] };
 let undoSnapshot = null;
 let confirmResolve = null;
 let pendingImportRows = [];
+let pendingImportMode = 'poule-scores';
 
 const BONUS_OTHER_CHOICE = 'Autre';
 
@@ -952,17 +963,71 @@ function closeConfirmDialog(result) {
 function closeImportOverlay() {
   document.getElementById('import-overlay').classList.add('hidden');
   pendingImportRows = [];
+  pendingImportMode = 'poule-scores';
+}
+
+function isKoSlotEmpty(mid) {
+  const [h, a] = getKoTeams(mid);
+  return !String(h || '').trim() || !String(a || '').trim();
+}
+
+function isKoScoreSlotEmpty(mid) {
+  const sc = getKoScore(mid);
+  return !Number.isFinite(parseScore(sc.scoreHome)) || !Number.isFinite(parseScore(sc.scoreAway));
+}
+
+function importOverwriteLabel(mode) {
+  if (mode === 'ko-teams') return 'Remplacer les affrontements déjà renseignés pour les matchs cochés';
+  if (mode === 'ko-scores') return 'Remplacer les scores KO déjà saisis pour les matchs cochés';
+  return 'Remplacer les scores déjà saisis pour les matchs cochés';
+}
+
+function importEmptyMessage(mode) {
+  if (mode === 'ko-teams') {
+    return 'Aucun affrontement KO vide à importer.<br>Tous déjà saisis, ou FIFA n’a pas encore confirmé les deux équipes.';
+  }
+  if (mode === 'ko-scores') {
+    return 'Aucun score KO vide à importer.<br>Matchs non terminés, équipes TBD, ou scores déjà saisis.';
+  }
+  return 'Aucun match poule vide à importer (48 h).<br>Tous déjà saisis, ou API sans score terminé (NS) — saisie manuelle / FIFA.';
 }
 
 function renderImportOverlayList(rows) {
   const list = document.getElementById('import-live-list');
+  const mode = pendingImportMode;
   if (!rows.length) {
-    list.innerHTML = '<p class="import-live-empty">Aucun match poule vide à importer (48 h).<br>Tous déjà saisis, ou API sans score terminé (NS) — saisie manuelle / FIFA.</p>';
+    list.innerHTML = '<p class="import-live-empty">' + importEmptyMessage(mode) + '</p>';
     document.getElementById('import-apply').disabled = true;
     return;
   }
   document.getElementById('import-apply').disabled = false;
   list.innerHTML = rows.map((r, i) => {
+    if (mode === 'ko-teams') {
+      const cur = getKoTeams(r.mid);
+      const hasCur = String(cur[0] || '').trim() && String(cur[1] || '').trim();
+      const same = hasCur && cur[0] === r.home && cur[1] === r.away;
+      const curTxt = hasCur ? ` (actuel : ${cur[0]}–${cur[1]})` : '';
+      return `<label class="import-live-row${same ? ' import-same' : ''}">
+        <input type="checkbox" data-import-idx="${i}" checked>
+        <span class="import-mid">M${r.mid}</span>
+        <span class="import-teams">${escapeAttr(r.home)} – ${escapeAttr(r.away)}${same ? '' : escapeAttr(curTxt)}</span>
+        <span class="import-score">—</span>
+        <span class="import-badge">${escapeAttr(r.sourceLabel || 'FIFA')}</span>
+      </label>`;
+    }
+    if (mode === 'ko-scores') {
+      const cur = getKoScore(r.mid);
+      const hasCur = Number.isFinite(parseScore(cur.scoreHome)) && Number.isFinite(parseScore(cur.scoreAway));
+      const same = hasCur && parseScore(cur.scoreHome) === r.scoreHome && parseScore(cur.scoreAway) === r.scoreAway;
+      const curTxt = hasCur ? ` (actuel : ${cur.scoreHome}–${cur.scoreAway})` : '';
+      return `<label class="import-live-row${r.isLive ? ' is-live' : ''}${same ? ' import-same' : ''}">
+        <input type="checkbox" data-import-idx="${i}" checked>
+        <span class="import-mid">M${r.mid}</span>
+        <span class="import-teams">${escapeAttr(r.home)} – ${escapeAttr(r.away)}${same ? '' : escapeAttr(curTxt)}</span>
+        <span class="import-score">${r.scoreHome}–${r.scoreAway}</span>
+        <span class="import-badge">${escapeAttr(r.sourceLabel)}</span>
+      </label>`;
+    }
     const cur = getPouleMatch(r.num);
     const hasCur = Number.isFinite(parseScore(cur.scoreHome)) && Number.isFinite(parseScore(cur.scoreAway));
     const same = hasCur && parseScore(cur.scoreHome) === r.scoreHome && parseScore(cur.scoreAway) === r.scoreAway;
@@ -978,9 +1043,17 @@ function renderImportOverlayList(rows) {
   }).join('');
 }
 
-function openImportOverlay(rows, meta) {
+function openImportOverlay(rows, meta, mode) {
+  pendingImportMode = mode || 'poule-scores';
   pendingImportRows = rows;
+  const titles = {
+    'poule-scores': 'Importer scores du jour',
+    'ko-teams': 'Importer affrontements FIFA',
+    'ko-scores': 'Importer scores KO (live)',
+  };
+  document.getElementById('import-title').textContent = titles[pendingImportMode] || 'Importer';
   document.getElementById('import-live-meta').textContent = meta;
+  document.getElementById('import-overwrite-label').textContent = importOverwriteLabel(pendingImportMode);
   document.getElementById('import-overwrite').checked = false;
   renderImportOverlayList(rows);
   document.getElementById('import-overlay').classList.remove('hidden');
@@ -1012,7 +1085,7 @@ async function startLiveImport() {
     const meta = `${rows.length} match(s) poule vide · fenêtre 48 h · source ${payload.source || 'worldcup26'} · màj ${updated}`;
     status.textContent = '';
     status.classList.add('hidden');
-    openImportOverlay(rows, meta);
+    openImportOverlay(rows, meta, 'poule-scores');
   } catch (e) {
     status.textContent = e.message || 'Impossible de charger les scores live.';
     status.classList.add('err');
@@ -1022,7 +1095,76 @@ async function startLiveImport() {
   }
 }
 
+async function startKoTeamsImport() {
+  const btn = document.getElementById('btn-import-ko-teams');
+  const status = document.getElementById('import-ko-teams-status');
+  if (!window.CDM_WC26?.fetchKnockoutFixtures) {
+    showMsg('Module worldcup26-api.js manquant.', true);
+    return;
+  }
+  btn.disabled = true;
+  status.classList.remove('hidden');
+  status.textContent = 'Chargement des affrontements FIFA…';
+  status.classList.remove('err');
+  try {
+    const payload = await CDM_WC26.fetchKnockoutFixtures();
+    const rows = CDM_WC26.proposeKoTeamImports(payload.fixtures, {
+      onlyEmpty: true,
+      isSlotEmpty: isKoSlotEmpty,
+    });
+    const updated = new Date(payload.fetchedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const meta = `${rows.length} affrontement(s) KO vide · source ${payload.source || 'worldcup26'} · màj ${updated}`;
+    status.textContent = '';
+    status.classList.add('hidden');
+    openImportOverlay(rows, meta, 'ko-teams');
+  } catch (e) {
+    status.textContent = e.message || 'Impossible de charger les affrontements FIFA.';
+    status.classList.add('err');
+    showMsg(status.textContent, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function startKoScoresImport() {
+  const btn = document.getElementById('btn-import-ko-scores');
+  const status = document.getElementById('import-ko-scores-status');
+  if (!window.CDM_WC26?.fetchKnockoutFixtures) {
+    showMsg('Module worldcup26-api.js manquant.', true);
+    return;
+  }
+  btn.disabled = true;
+  status.classList.remove('hidden');
+  status.textContent = 'Chargement des scores KO live…';
+  status.classList.remove('err');
+  try {
+    const payload = await CDM_WC26.fetchKnockoutFixtures();
+    const rows = CDM_WC26.proposeKoScoreImports(payload.fixtures, {
+      includeLive: true,
+      onlyEmpty: true,
+      isScoreEmpty: isKoScoreSlotEmpty,
+    });
+    const updated = new Date(payload.fetchedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const meta = `${rows.length} score(s) KO vide · source ${payload.source || 'worldcup26'} · màj ${updated}`;
+    status.textContent = '';
+    status.classList.add('hidden');
+    openImportOverlay(rows, meta, 'ko-scores');
+  } catch (e) {
+    status.textContent = e.message || 'Impossible de charger les scores KO.';
+    status.classList.add('err');
+    showMsg(status.textContent, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 function applyLiveImport() {
+  if (pendingImportMode === 'ko-teams') return applyKoTeamsImport();
+  if (pendingImportMode === 'ko-scores') return applyKoScoresImport();
+  applyPouleScoresImport();
+}
+
+function applyPouleScoresImport() {
   const overwrite = document.getElementById('import-overwrite').checked;
   const checked = [...document.querySelectorAll('#import-live-list input[data-import-idx]:checked')]
     .map(el => pendingImportRows[Number(el.dataset.importIdx)])
@@ -1053,6 +1195,77 @@ function applyLiveImport() {
   if (liveN) msg += ` ${liveN} en cours : vérifiez avant publication.`;
   msg += ' Publiez quand c’est bon.';
   showMsg(msg);
+}
+
+function applyKoTeamsImport() {
+  const overwrite = document.getElementById('import-overwrite').checked;
+  const checked = [...document.querySelectorAll('#import-live-list input[data-import-idx]:checked')]
+    .map(el => pendingImportRows[Number(el.dataset.importIdx)])
+    .filter(Boolean);
+  if (!checked.length) {
+    showMsg('Cochez au moins un match à importer.', true);
+    return;
+  }
+  let applied = 0;
+  let skipped = 0;
+  pushUndo('Import affrontements KO (FIFA)');
+  checked.forEach(r => {
+    const key = String(r.mid);
+    const cur = state.matchsEliminationOfficiels?.[key] || { home: '', away: '' };
+    const hasCur = String(cur.home || '').trim() && String(cur.away || '').trim();
+    if (hasCur && !overwrite) {
+      skipped++;
+      return;
+    }
+    if (!state.matchsEliminationOfficiels) state.matchsEliminationOfficiels = {};
+    state.matchsEliminationOfficiels[key] = { home: r.home, away: r.away };
+    applied++;
+  });
+  renderMatchSections();
+  closeImportOverlay();
+  let msg = `${applied} affrontement(s) appliqué(s) au brouillon.`;
+  if (skipped) msg += ` ${skipped} ignoré(s) (déjà renseignés — cochez « Remplacer »).`;
+  showMsg(msg + ' Publiez pour débloquer l’étape 3 côté joueurs.');
+}
+
+function applyKoScoresImport() {
+  const overwrite = document.getElementById('import-overwrite').checked;
+  const checked = [...document.querySelectorAll('#import-live-list input[data-import-idx]:checked')]
+    .map(el => pendingImportRows[Number(el.dataset.importIdx)])
+    .filter(Boolean);
+  if (!checked.length) {
+    showMsg('Cochez au moins un match à importer.', true);
+    return;
+  }
+  let applied = 0;
+  let skipped = 0;
+  pushUndo('Import scores KO (live)');
+  checked.forEach(r => {
+    const cur = getKoScore(r.mid);
+    const hasCur = Number.isFinite(parseScore(cur.scoreHome)) && Number.isFinite(parseScore(cur.scoreAway));
+    if (hasCur && !overwrite) {
+      skipped++;
+      return;
+    }
+    const [th, ta] = getKoTeams(r.mid);
+    const home = th || r.home;
+    const away = ta || r.away;
+    if (!state.matchsEliminationOfficiels) state.matchsEliminationOfficiels = {};
+    if (!String(th || '').trim() || !String(ta || '').trim()) {
+      state.matchsEliminationOfficiels[String(r.mid)] = { home: r.home, away: r.away };
+    }
+    setKoScore(r.mid, home, away, String(r.scoreHome), String(r.scoreAway));
+    applied++;
+  });
+  syncDerivedFields();
+  renderMatchSections();
+  renderKoScores();
+  closeImportOverlay();
+  const liveN = checked.filter(r => r.isLive).length;
+  let msg = `${applied} score(s) KO appliqué(s) au brouillon.`;
+  if (skipped) msg += ` ${skipped} ignoré(s) (déjà saisis — cochez « Remplacer »).`;
+  if (liveN) msg += ` ${liveN} en cours : vérifiez avant publication.`;
+  showMsg(msg + ' Publiez quand c’est bon.');
 }
 
 function clearKoScoreKeys(mid) {
@@ -1859,6 +2072,8 @@ document.getElementById('btn-undo').addEventListener('click', restoreUndo);
 document.getElementById('btn-reset-etape-draft').addEventListener('click', () => runReset('etape-draft'));
 document.getElementById('btn-reset-poules').addEventListener('click', () => runReset('poules'));
 document.getElementById('btn-import-live').addEventListener('click', startLiveImport);
+document.getElementById('btn-import-ko-teams').addEventListener('click', startKoTeamsImport);
+document.getElementById('btn-import-ko-scores').addEventListener('click', startKoScoresImport);
 document.getElementById('import-cancel').addEventListener('click', closeImportOverlay);
 document.getElementById('import-apply').addEventListener('click', applyLiveImport);
 document.getElementById('import-overlay').addEventListener('click', e => {
