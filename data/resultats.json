@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-06-26",
+    "misAJour": "2026-06-27",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 3,
@@ -326,14 +326,18 @@
     "Match 65": {
       "home": "Nouvelle Zélande",
       "away": "Belgique",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "5",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 66": {
       "home": "Égypte",
       "away": "Iran",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 13": {
       "home": "Espagne",
@@ -370,14 +374,18 @@
     "Match 63": {
       "home": "Uruguay",
       "away": "Espagne",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "0",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": "1"
     },
     "Match 64": {
       "home": "Cap Vert",
       "away": "Arabie Saoudite",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "0",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 17": {
       "home": "France",
@@ -414,14 +422,18 @@
     "Match 61": {
       "home": "Norvège",
       "away": "France",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "4",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 62": {
       "home": "Sénégal",
       "away": "Irak",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "5",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": "1"
     },
     "Match 19": {
       "home": "Argentine",
@@ -703,8 +715,8 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "177",
-    "nbCartonsRouges": "8",
+    "nbButs": "196",
+    "nbCartonsRouges": "10",
     "nbProlongations": "4",
     "nbCSC": "10"
   }
