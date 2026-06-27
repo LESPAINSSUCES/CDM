@@ -297,7 +297,7 @@ input[type="number"].stat-in { width: 2.1rem; text-align: center; padding: .35re
       <div class="actions import-bar">
         <button type="button" class="btn btn-primary" id="btn-import-ko-teams">Importer affrontements FIFA</button>
       </div>
-      <p class="hint">Préremplit les champs <strong>vides</strong> depuis worldcup26 (équipes confirmées seulement) — vérifiez puis publiez.</p>
+      <p class="hint">Préremplit les champs <strong>vides</strong> depuis worldcup26 (équipes confirmées seulement) — vérifiez puis publiez. Les équipes apparaissent aussi dans <strong>Phase finale — scores</strong>.</p>
       <p class="err hidden" id="import-ko-teams-status"></p>
       <div id="match-sections"></div>
       <div class="reset-bar">
@@ -1222,10 +1222,11 @@ function applyKoTeamsImport() {
     applied++;
   });
   renderMatchSections();
+  renderKoScores();
   closeImportOverlay();
   let msg = `${applied} affrontement(s) appliqué(s) au brouillon.`;
   if (skipped) msg += ` ${skipped} ignoré(s) (déjà renseignés — cochez « Remplacer »).`;
-  showMsg(msg + ' Publiez pour débloquer l’étape 3 côté joueurs.');
+  showMsg(msg + ' Équipes visibles dans Phase finale — scores. Publiez pour l’étape 3 côté joueurs.');
 }
 
 function applyKoScoresImport() {
@@ -1487,6 +1488,8 @@ function switchPanel(name) {
   document.querySelectorAll('.org-tabs button').forEach(b => b.classList.toggle('active', b.dataset.panel === name));
   document.querySelectorAll('.org-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'ko-teams') renderMatchSections();
+  if (name === 'ko-scores') renderKoScores();
   if (name === 'profils') renderProfils();
 }
 
@@ -1736,6 +1739,9 @@ function renderMatchSections() {
       const side = inp.dataset.side;
       if (!state.matchsEliminationOfficiels[mid]) state.matchsEliminationOfficiels[mid] = { home: '', away: '' };
       state.matchsEliminationOfficiels[mid][side] = inp.value.trim();
+      if (document.getElementById('panel-ko-scores')?.classList.contains('active')) {
+        renderKoScores();
+      }
     });
   });
 }
