@@ -1,7 +1,7 @@
 {
   "meta": {
     "misAJour": "2026-06-27",
-    "note": "Mis à jour via organisateur.html"
+    "note": "Synchronisé FIFA worldcup26.ir — 66/72 matchs poule"
   },
   "etapeDebloquee": 3,
   "matchs": {
@@ -17,7 +17,9 @@
       "home": "Corée du Sud",
       "away": "Rép. Tchèque",
       "scoreHome": "2",
-      "scoreAway": "1"
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 25": {
       "home": "Rép. Tchèque",
@@ -568,71 +570,104 @@
       "scoreAway": ""
     }
   },
-  "equipesQualifiees32Liste": [],
+  "equipesQualifiees32Liste": [
+    "Afrique du Sud",
+    "Canada",
+    "Allemagne",
+    "Paraguay",
+    "Pays-Bas",
+    "Maroc",
+    "Brésil",
+    "Japon",
+    "France",
+    "Suède",
+    "Côte d'Ivoire",
+    "Norvège",
+    "Mexique",
+    "Écosse",
+    "Angleterre",
+    "Sénégal",
+    "États-Unis",
+    "Bosnie Herzégovine",
+    "Belgique",
+    "Corée du Sud",
+    "Portugal",
+    "Ghana",
+    "Espagne",
+    "Autriche",
+    "Suisse",
+    "Iran",
+    "Argentine",
+    "Cap Vert",
+    "Colombie",
+    "Équateur",
+    "Australie",
+    "Égypte"
+  ],
   "matchsEliminationOfficiels": {
     "73": {
-      "home": "",
-      "away": ""
+      "home": "Afrique du Sud",
+      "away": "Canada"
     },
     "74": {
-      "home": "",
-      "away": ""
+      "home": "Allemagne",
+      "away": "Paraguay"
     },
     "75": {
-      "home": "",
-      "away": ""
+      "home": "Pays-Bas",
+      "away": "Maroc"
     },
     "76": {
-      "home": "",
-      "away": ""
+      "home": "Brésil",
+      "away": "Japon"
     },
     "77": {
-      "home": "",
-      "away": ""
+      "home": "France",
+      "away": "Suède"
     },
     "78": {
-      "home": "",
-      "away": ""
+      "home": "Côte d'Ivoire",
+      "away": "Norvège"
     },
     "79": {
-      "home": "",
-      "away": ""
+      "home": "Mexique",
+      "away": "Écosse"
     },
     "80": {
-      "home": "",
-      "away": ""
+      "home": "Angleterre",
+      "away": "Sénégal"
     },
     "81": {
-      "home": "",
-      "away": ""
+      "home": "États-Unis",
+      "away": "Bosnie Herzégovine"
     },
     "82": {
-      "home": "",
-      "away": ""
+      "home": "Belgique",
+      "away": "Corée du Sud"
     },
     "83": {
-      "home": "",
-      "away": ""
+      "home": "Portugal",
+      "away": "Ghana"
     },
     "84": {
-      "home": "",
-      "away": ""
+      "home": "Espagne",
+      "away": "Autriche"
     },
     "85": {
-      "home": "",
-      "away": ""
+      "home": "Suisse",
+      "away": "Iran"
     },
     "86": {
-      "home": "",
-      "away": ""
+      "home": "Argentine",
+      "away": "Cap Vert"
     },
     "87": {
-      "home": "",
-      "away": ""
+      "home": "Colombie",
+      "away": "Équateur"
     },
     "88": {
-      "home": "",
-      "away": ""
+      "home": "Australie",
+      "away": "Égypte"
     },
     "89": {
       "home": "",
@@ -699,9 +734,107 @@
       "away": ""
     }
   },
-  "seiziemeParMatchR32": {},
+  "seiziemeParMatchR32": {
+    "M73": {
+      "left": "Afrique du Sud",
+      "right": "Canada"
+    },
+    "M74": {
+      "left": "Allemagne",
+      "right": "Paraguay"
+    },
+    "M75": {
+      "left": "Pays-Bas",
+      "right": "Maroc"
+    },
+    "M76": {
+      "left": "Brésil",
+      "right": "Japon"
+    },
+    "M77": {
+      "left": "France",
+      "right": "Suède"
+    },
+    "M78": {
+      "left": "Côte d'Ivoire",
+      "right": "Norvège"
+    },
+    "M79": {
+      "left": "Mexique",
+      "right": "Écosse"
+    },
+    "M80": {
+      "left": "Angleterre",
+      "right": "Sénégal"
+    },
+    "M81": {
+      "left": "États-Unis",
+      "right": "Bosnie Herzégovine"
+    },
+    "M82": {
+      "left": "Belgique",
+      "right": "Corée du Sud"
+    },
+    "M83": {
+      "left": "Portugal",
+      "right": "Ghana"
+    },
+    "M84": {
+      "left": "Espagne",
+      "right": "Autriche"
+    },
+    "M85": {
+      "left": "Suisse",
+      "right": "Iran"
+    },
+    "M86": {
+      "left": "Argentine",
+      "right": "Cap Vert"
+    },
+    "M87": {
+      "left": "Colombie",
+      "right": "Équateur"
+    },
+    "M88": {
+      "left": "Australie",
+      "right": "Égypte"
+    }
+  },
   "phaseFinalePourBareme": {
-    "liste32QualifiesIssuesPoules": [],
+    "liste32QualifiesIssuesPoules": [
+      "Afrique du Sud",
+      "Canada",
+      "Allemagne",
+      "Paraguay",
+      "Pays-Bas",
+      "Maroc",
+      "Brésil",
+      "Japon",
+      "France",
+      "Suède",
+      "Côte d'Ivoire",
+      "Norvège",
+      "Mexique",
+      "Écosse",
+      "Angleterre",
+      "Sénégal",
+      "États-Unis",
+      "Bosnie Herzégovine",
+      "Belgique",
+      "Corée du Sud",
+      "Portugal",
+      "Ghana",
+      "Espagne",
+      "Autriche",
+      "Suisse",
+      "Iran",
+      "Argentine",
+      "Cap Vert",
+      "Colombie",
+      "Équateur",
+      "Australie",
+      "Égypte"
+    ],
     "vainqueursSeiziemePourHuitiemes16": [],
     "vainqueursHuitiemesPourQuarts8": [],
     "vainqueursQuartsPourDemis4": [],
