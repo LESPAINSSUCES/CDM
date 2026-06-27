@@ -2589,6 +2589,7 @@ body.grille-remote-locked #player-code-input {
 <script src="js/fifa-rankings.js"></script>
 <script src="js/poule-votes.js"></script>
 <script src="js/scoring.js?v=5"></script>
+<script src="js/fifa-annex-c.js"></script>
 <script>
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const NATIONS = [
@@ -3135,6 +3136,42 @@ function backtrackThirdSlots(slots, idx, used, out) {
   return false;
 }
 
+function assignThirdsFromFifaAnnex(used) {
+  if (ADVANCE_THIRD.size !== 8 || !window.CDM_FIFA_ANNEX_C) return false;
+  const byMatch = CDM_FIFA_ANNEX_C.fifaAnnexThirdAssignments([...ADVANCE_THIRD]);
+  if (!byMatch) return false;
+  for (const mid of Object.keys(byMatch).map(Number)) {
+    const grp = byMatch[mid];
+    const g = STANDINGS[grp];
+    const tn = g?.teams?.[2]?.team;
+    if (!tn || used.has(tn)) return false;
+    const def = KNOCK_R32_DEF.find(d => d.m === mid);
+    const side = def?.R?.k === 'third' ? 'right' : (def?.L?.k === 'third' ? 'left' : null);
+    if (!side) return false;
+    R32_SIDE[mid][side] = tn;
+    used.add(tn);
+  }
+  return true;
+}
+
+function fillThirdSlotsFallback(thirdSlots, used) {
+  const thirdOut = [];
+  const backtrackOk = backtrackThirdSlots(thirdSlots, 0, used, thirdOut);
+  if (backtrackOk) {
+    thirdOut.forEach(a => { R32_SIDE[a.m][a.side] = a.team; });
+    return true;
+  }
+  thirdSlots.forEach(slot => {
+    if (R32_SIDE[slot.m][slot.side]) return;
+    const cands = getThirdCandidates(slot.pool, used);
+    if (cands[0]) {
+      used.add(cands[0].team);
+      R32_SIDE[slot.m][slot.side] = cands[0].team;
+    }
+  });
+  return false;
+}
+
 function describeMissingSlot(slotDef) {
   if (slotDef.k === 'third') {
     const pool = slotDef.pool || [];
@@ -3224,19 +3261,22 @@ function rebuildEngine() {
     else R32_SIDE[def.m].right = assignStraightSlot(def.R, used);
   });
 
-  const thirdOut = [];
-  const backtrackOk = backtrackThirdSlots(thirdSlots, 0, used, thirdOut);
-  if (backtrackOk) {
-    thirdOut.forEach(a => { R32_SIDE[a.m][a.side] = a.team; });
-  } else {
-    thirdSlots.forEach(slot => {
-      if (R32_SIDE[slot.m][slot.side]) return;
-      const cands = getThirdCandidates(slot.pool, used);
-      if (cands[0]) {
-        used.add(cands[0].team);
-        R32_SIDE[slot.m][slot.side] = cands[0].team;
-      }
+  let annexOk = assignThirdsFromFifaAnnex(used);
+  let backtrackOk = annexOk;
+  if (!annexOk) {
+    thirdSlots.forEach(slot => { R32_SIDE[slot.m][slot.side] = ''; });
+    const straightUsed = new Set();
+    KNOCK_R32_DEF.forEach(def => {
+      [def.L, def.R].forEach((slot, i) => {
+        if (slot.k !== 'third') {
+          const t = i === 0 ? R32_SIDE[def.m].left : R32_SIDE[def.m].right;
+          if (t) straightUsed.add(t);
+        }
+      });
     });
+    used.clear();
+    straightUsed.forEach(t => used.add(t));
+    backtrackOk = fillThirdSlotsFallback(thirdSlots, used);
   }
 
   const v = analyzeR32Uniqueness(R32_SIDE);
@@ -3246,7 +3286,7 @@ function rebuildEngine() {
     count: v.count,
     duplicates: v.duplicates,
     missingSlots,
-    thirdBacktrackOk: backtrackOk,
+    thirdBacktrackOk: backtrackOk || annexOk,
   };
 }
 

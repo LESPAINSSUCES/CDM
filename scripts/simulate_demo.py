@@ -90,6 +90,20 @@ OFFICIAL_BONUS = {
 }
 
 
+_ANNEX = json.loads((ROOT / "data/fifa-annex-c.json").read_text())
+_ANNEX_SLOT_ORDER = _ANNEX["slotOrder"]
+_ANNEX_MATCH_BY_SLOT = _ANNEX["matchBySlot"]
+_ANNEX_LOOKUP = _ANNEX["lookup"]
+
+
+def fifa_annex_third_assignments(advance_groups: set[str]) -> dict[int, str] | None:
+    key = "".join(sorted(g.upper() for g in advance_groups))
+    mapping = _ANNEX_LOOKUP.get(key)
+    if not mapping:
+        return None
+    return {_ANNEX_MATCH_BY_SLOT[slot]: mapping[i] for i, slot in enumerate(_ANNEX_SLOT_ORDER)}
+
+
 def rank(team: str) -> int:
     try:
         return KO_STRENGTH.index(team)
@@ -216,17 +230,45 @@ def build_r32(standings: dict, thirds: list) -> dict[int, dict]:
             r32[m]["right"] = assign_straight(defn["R"], used)
 
     assignment = {}
-    if backtrack_thirds(third_slots, 0, used, assignment):
-        for (m, side), tn in assignment.items():
+    annex = fifa_annex_third_assignments(advance_third)
+    annex_ok = False
+    if annex:
+        annex_ok = True
+        for m, grp in annex.items():
+            g = standings.get(grp)
+            tn = g["teams"][2]["team"] if g else ""
+            if not tn or tn in used:
+                annex_ok = False
+                break
+            side = "right"
+            for defn in KNOCK_R32_DEF:
+                if defn["m"] == m:
+                    side = "right" if defn["R"].get("k") == "third" else "left"
+                    break
             r32[m][side] = tn
-    else:
-        for m, side, pool in third_slots:
-            if r32[m][side]:
-                continue
-            cands = third_candidates(pool, used)
-            if cands:
-                used.add(cands[0])
-                r32[m][side] = cands[0]
+            used.add(tn)
+        if not annex_ok:
+            for m, side, _ in third_slots:
+                r32[m][side] = ""
+            used = set()
+            for defn in KNOCK_R32_DEF:
+                m = defn["m"]
+                if defn["L"].get("k") != "third" and r32[m]["left"]:
+                    used.add(r32[m]["left"])
+                if defn["R"].get("k") != "third" and r32[m]["right"]:
+                    used.add(r32[m]["right"])
+    if not annex_ok:
+        if backtrack_thirds(third_slots, 0, used, assignment):
+            for (m, side), tn in assignment.items():
+                r32[m][side] = tn
+        else:
+            for m, side, pool in third_slots:
+                if r32[m][side]:
+                    continue
+                cands = third_candidates(pool, used)
+                if cands:
+                    used.add(cands[0])
+                    r32[m][side] = cands[0]
     return r32
 
 

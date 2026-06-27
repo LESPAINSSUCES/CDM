@@ -418,6 +418,7 @@ input[type="number"].stat-in { width: 2.1rem; text-align: center; padding: .35re
 <script src="js/leagues.js"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/seed-demo-grilles.js"></script>
+<script src="js/fifa-annex-c.js"></script>
 <script>
 const ORG_PIN_HASH = 'b5fba5acc2c2dfaf6003166625a8de638260a920e1143d7eba941aa8ca259b7d';
 const ORG_SESSION_DAYS = 30;
@@ -841,6 +842,37 @@ function rebuildPouleEngine() {
     return false;
   }
 
+  function assignThirdsFromFifaAnnex(used, advanceThird) {
+    if (advanceThird.size !== 8 || !window.CDM_FIFA_ANNEX_C) return false;
+    const byMatch = CDM_FIFA_ANNEX_C.fifaAnnexThirdAssignments([...advanceThird]);
+    if (!byMatch) return false;
+    for (const mid of Object.keys(byMatch).map(Number)) {
+      const grp = byMatch[mid];
+      const tn = STANDINGS[grp]?.teams?.[2]?.team;
+      if (!tn || used.has(tn)) return false;
+      const def = KNOCK_R32_DEF.find(d => d.m === mid);
+      const side = def?.R?.k === 'third' ? 'right' : (def?.L?.k === 'third' ? 'left' : null);
+      if (!side) return false;
+      R32_SIDE[mid][side] = tn;
+      used.add(tn);
+    }
+    return true;
+  }
+
+  function fillThirdSlotsFallback(thirdSlots, used) {
+    const thirdOut = [];
+    if (backtrackThirds(thirdSlots, 0, used, thirdOut)) {
+      thirdOut.forEach(a => { R32_SIDE[a.m][a.side] = a.team; });
+      return true;
+    }
+    thirdSlots.forEach(slot => {
+      if (R32_SIDE[slot.m][slot.side]) return;
+      const c = getThirdCandidates(slot.pool, used)[0];
+      if (c) { used.add(c.team); R32_SIDE[slot.m][slot.side] = c.team; }
+    });
+    return false;
+  }
+
   const R32_SIDE = {};
   let allComplete = true;
   for (const rows of Object.values(GROUPS)) {
@@ -859,15 +891,20 @@ function rebuildPouleEngine() {
       if (def.R.k === 'third') thirdSlots.push({ m: def.m, side: 'right', pool: def.R.pool });
       else R32_SIDE[def.m].right = assignStraightSlot(def.R, used);
     });
-    const thirdOut = [];
-    if (backtrackThirds(thirdSlots, 0, used, thirdOut)) {
-      thirdOut.forEach(a => { R32_SIDE[a.m][a.side] = a.team; });
-    } else {
-      thirdSlots.forEach(slot => {
-        if (R32_SIDE[slot.m][slot.side]) return;
-        const c = getThirdCandidates(slot.pool, used)[0];
-        if (c) { used.add(c.team); R32_SIDE[slot.m][slot.side] = c.team; }
+    if (!assignThirdsFromFifaAnnex(used, ADVANCE_THIRD)) {
+      thirdSlots.forEach(slot => { R32_SIDE[slot.m][slot.side] = ''; });
+      const straightUsed = new Set();
+      KNOCK_R32_DEF.forEach(def => {
+        [def.L, def.R].forEach((slot, i) => {
+          if (slot.k !== 'third') {
+            const t = i === 0 ? R32_SIDE[def.m].left : R32_SIDE[def.m].right;
+            if (t) straightUsed.add(t);
+          }
+        });
       });
+      used.clear();
+      straightUsed.forEach(t => used.add(t));
+      fillThirdSlotsFallback(thirdSlots, used);
     }
   }
   const list32 = [];
