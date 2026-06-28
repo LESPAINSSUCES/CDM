@@ -262,9 +262,9 @@ input[type="number"].stat-in { width: 2.1rem; text-align: center; padding: .35re
 
     <div id="panel-etape" class="org-panel active card">
       <h2>Étape débloquée <span class="status-pill" id="pub-etape">—</span></h2>
-      <p class="hint">Les joueurs voient les scores KO des étapes ≤ à cette valeur. <strong>Seul levier de verrouillage</strong> des pronos (plus de date automatique au 11 juin).</p>
+      <p class="hint">Les joueurs voient les scores KO des étapes ≤ à cette valeur. À partir de l’étape 3, les pronos restent modifiables <strong>jusqu’au coup d’envoi</strong> de chaque match (heure FIFA / worldcup26).</p>
       <div class="etape-btns" id="etape-picker"></div>
-      <p class="hint"><strong>0</strong> tout ouvert (poules + tableau + bonus) · <strong>1</strong> poules verrouillées · <strong>2</strong> tableau + bonus verrouillés · <strong>3</strong> seizièmes · <strong>4</strong> huitièmes · <strong>5</strong> quarts · <strong>6</strong> demis · <strong>7</strong> finale + bonus compétition</p>
+      <p class="hint"><strong>0</strong> tout ouvert · <strong>1</strong> poules verrouillées · <strong>2</strong> tableau + bonus verrouillés · <strong>3–7</strong> débloquent les tours KO (scores modifiables jusqu’à l’heure du match)</p>
       <div class="reset-bar">
         <div class="actions">
           <button type="button" class="btn" id="btn-reset-etape-draft">Remettre brouillon étape à 0</button>
@@ -297,7 +297,8 @@ input[type="number"].stat-in { width: 2.1rem; text-align: center; padding: .35re
       <div class="actions import-bar">
         <button type="button" class="btn btn-primary" id="btn-import-ko-teams">Importer affrontements FIFA</button>
       </div>
-      <p class="hint">Préremplit les champs <strong>vides</strong> depuis worldcup26 (équipes confirmées seulement) — vérifiez puis publiez. Les équipes apparaissent aussi dans <strong>Phase finale — scores</strong>.</p>
+      <p class="hint">Préremplit les champs <strong>vides</strong> depuis worldcup26 (équipes confirmées seulement) — vérifiez puis publiez. Les équipes apparaissent aussi dans <strong>Phase finale — scores</strong>. L’import alimente aussi <strong>phaseFinalePourBareme</strong> (points étape 2 tableau) sans attendre les 72 poules.</p>
+      <p class="hint" id="bareme-ko-status"></p>
       <p class="err hidden" id="import-ko-teams-status"></p>
       <div id="match-sections"></div>
       <div class="reset-bar">
@@ -397,6 +398,10 @@ input[type="number"].stat-in { width: 2.1rem; text-align: center; padding: .35re
       <input type="checkbox" id="import-overwrite">
       <span id="import-overwrite-label">Remplacer les scores déjà saisis pour les matchs cochés</span>
     </label>
+    <label class="check-row hidden" id="import-bareme-wrap">
+      <input type="checkbox" id="import-rebuild-bareme" checked>
+      <span>Mettre à jour le barème tableau (32 seizièmes, vainqueurs…) depuis le KO officiel FIFA</span>
+    </label>
     <div class="confirm-actions">
       <button type="button" class="btn" id="import-cancel">Annuler</button>
       <button type="button" class="btn btn-primary" id="import-apply">Appliquer au brouillon</button>
@@ -424,7 +429,7 @@ input[type="number"].stat-in { width: 2.1rem; text-align: center; padding: .35re
 </div>
 
 <script src="js/config.js"></script>
-<script src="js/worldcup26-api.js?v=3"></script>
+<script src="js/worldcup26-api.js?v=4"></script>
 <script src="js/leagues.js"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/seed-demo-grilles.js"></script>
@@ -522,8 +527,44 @@ let undoSnapshot = null;
 let confirmResolve = null;
 let pendingImportRows = [];
 let pendingImportMode = 'poule-scores';
+let pendingImportFixtures = [];
+let pendingImportSkipped = [];
 
 const BONUS_OTHER_CHOICE = 'Autre';
+
+function normTeamLocal(s) {
+  return String(s || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/\s+/g, ' ');
+}
+
+/** Harmonise vers le libellé NATIONS (Sénégal, pas Senegal). */
+function canonicalTeamName(name) {
+  const n = String(name || '').trim();
+  if (!n) return '';
+  if (window.CDM_WC26?.teamLabel) {
+    const labelled = CDM_WC26.teamLabel(n);
+    if (labelled && !CDM_WC26.isPlaceholderTeam(labelled)) {
+      const hit = NATIONS.find((t) => normTeamLocal(t) === normTeamLocal(labelled));
+      if (hit) return hit;
+    }
+  }
+  return NATIONS.find((t) => normTeamLocal(t) === normTeamLocal(n)) || n;
+}
+
+function normalizeStoredKoTeamNames() {
+  if (!state.matchsEliminationOfficiels) return;
+  for (let m = 73; m <= 104; m++) {
+    const k = String(m);
+    const p = state.matchsEliminationOfficiels[k];
+    if (!p) continue;
+    if (p.home) p.home = canonicalTeamName(p.home);
+    if (p.away) p.away = canonicalTeamName(p.away);
+  }
+}
 
 function bonusCatalogForField(type) {
   return type === 'keepers' ? GOALKEEPERS : SCORERS;
@@ -703,6 +744,76 @@ function syncBonusFromMatchStats() {
   state.bonus.nbCSC = String(sumPouleStat('csc'));
   state.bonus.nbCartonsRouges = String(sumAllCartonsRouges());
   if (sumAllGoals() > 0) state.bonus.nbButs = String(sumAllGoals());
+  syncPoulesBonusFields();
+}
+
+function computePoulesBonusStats() {
+  const teamPts = {};
+  const teamGf = {};
+  const teamGa = {};
+  let matchs00 = 0;
+  let groupsComplete = 0;
+
+  for (const [title, rows] of Object.entries(GROUPS)) {
+    if (computeGroupStanding(title, rows)) groupsComplete++;
+    for (const [num, hm, aw] of rows) {
+      const m = getPouleMatch(num);
+      const hh = parseScore(m.scoreHome);
+      const aa = parseScore(m.scoreAway);
+      if (!Number.isFinite(hh) || !Number.isFinite(aa)) continue;
+      if (hh === 0 && aa === 0) matchs00++;
+      [hm, aw].forEach((t) => {
+        if (!teamPts[t]) {
+          teamPts[t] = 0;
+          teamGf[t] = 0;
+          teamGa[t] = 0;
+        }
+      });
+      teamGf[hm] += hh;
+      teamGa[hm] += aa;
+      teamGf[aw] += aa;
+      teamGa[aw] += hh;
+      if (hh > aa) teamPts[hm] += 3;
+      else if (aa > hh) teamPts[aw] += 3;
+      else {
+        teamPts[hm]++;
+        teamPts[aw]++;
+      }
+    }
+  }
+
+  let nationsA9 = 0;
+  let meilleureAttaque = '';
+  if (groupsComplete === 12) {
+    Object.entries(teamPts).forEach(([, pts]) => {
+      if (pts === 9) nationsA9++;
+    });
+    let bestGf = -1;
+    let bestGa = Infinity;
+    Object.keys(teamGf).forEach((team) => {
+      const gf = teamGf[team];
+      const ga = teamGa[team];
+      const better = gf > bestGf
+        || (gf === bestGf && ga < bestGa)
+        || (gf === bestGf && ga === bestGa && (!meilleureAttaque || team.localeCompare(meilleureAttaque, 'fr') < 0));
+      if (better) {
+        bestGf = gf;
+        bestGa = ga;
+        meilleureAttaque = team;
+      }
+    });
+  }
+
+  return { matchs00, nationsA9, meilleureAttaque, groupsComplete };
+}
+
+function syncPoulesBonusFields() {
+  const stats = computePoulesBonusStats();
+  state.bonus.matchs00 = String(stats.matchs00);
+  if (stats.groupsComplete === 12) {
+    state.bonus.nationsA9pts = String(stats.nationsA9);
+    if (stats.meilleureAttaque) state.bonus.meilleureAttaque = stats.meilleureAttaque;
+  }
 }
 
 function groupLetter(title) {
@@ -849,7 +960,64 @@ function collectWinners(min, max) {
   return out;
 }
 
-function syncDerivedFields() {
+/** 32 seizièmes dérivés des affrontements officiels M73–M88 (FIFA import ou saisie manuelle). */
+function list32FromOfficialKoMatchups() {
+  const teams = new Set();
+  for (let m = 73; m <= 88; m++) {
+    const [home, away] = getKoTeams(m);
+    if (home && away) {
+      teams.add(home);
+      teams.add(away);
+    }
+  }
+  return [...teams].sort((a, b) => a.localeCompare(b, 'fr'));
+}
+
+function syncSeiziemeParMatchR32FromOfficial() {
+  if (!state.seiziemeParMatchR32) state.seiziemeParMatchR32 = {};
+  for (let m = 73; m <= 88; m++) {
+    const [home, away] = getKoTeams(m);
+    if (home || away) {
+      state.seiziemeParMatchR32['M' + m] = { left: home || '', right: away || '' };
+    }
+  }
+}
+
+function baremeKoSummary() {
+  const b = state.phaseFinalePourBareme || {};
+  const parts = [];
+  const n32 = (b.liste32QualifiesIssuesPoules || []).length;
+  if (n32) parts.push(`${n32}/32 seizièmes`);
+  const n16 = (b.vainqueursSeiziemePourHuitiemes16 || []).length;
+  if (n16) parts.push(`${n16}/16 vainqueurs seizièmes`);
+  const n8 = (b.vainqueursHuitiemesPourQuarts8 || []).length;
+  if (n8) parts.push(`${n8}/8 huitièmes`);
+  const n4 = (b.vainqueursQuartsPourDemis4 || []).length;
+  if (n4) parts.push(`${n4}/4 quarts`);
+  const n2 = (b.finalistesChoisis || []).length;
+  if (n2) parts.push(`${n2}/2 finalistes`);
+  if (b.vainqueurFinal) parts.push('vainqueur');
+  if (b.troisiemePlaceChoix) parts.push('3e place');
+  return parts.join(' · ');
+}
+
+function updateBaremeStatusBar() {
+  const el = document.getElementById('bareme-ko-status');
+  if (!el) return;
+  const s = baremeKoSummary();
+  el.textContent = s
+    ? `Barème tableau (export resultats.json) : ${s}.`
+    : 'Barème tableau vide — importez les affrontements FIFA ou complétez les 72 poules.';
+}
+
+function importRebuildBaremeChecked() {
+  const el = document.getElementById('import-rebuild-bareme');
+  return !el || el.checked;
+}
+
+function syncDerivedFields(opts = {}) {
+  const rebuildBareme = opts.rebuildBareme !== false;
+  normalizeStoredKoTeamNames();
   rebuildPouleEngine();
   if (!state.vainqueursTableauElimination) state.vainqueursTableauElimination = {};
   for (let m = 73; m <= 104; m++) {
@@ -858,28 +1026,50 @@ function syncDerivedFields() {
     else delete state.vainqueursTableauElimination[String(m)];
   }
   const eng = engineCache;
-  state.equipesQualifiees32Liste = eng.list32.length === 32 ? [...eng.list32] : (state.equipesQualifiees32Liste || []);
-  state.seiziemeParMatchR32 = {};
-  Object.entries(eng.R32_SIDE).forEach(([m, p]) => {
-    state.seiziemeParMatchR32['M' + m] = { left: p.left || '', right: p.right || '' };
-  });
-  const r16 = collectWinners(73, 88);
-  const qf = collectWinners(89, 96);
-  const sf = collectWinners(97, 100);
-  const finalists = collectWinners(101, 102);
-  const winner = koWinnerFromScores(104);
-  const third = koWinnerFromScores(103);
-  state.phaseFinalePourBareme = {
-    liste32QualifiesIssuesPoules: eng.list32.length === 32 ? [...eng.list32] : (state.phaseFinalePourBareme?.liste32QualifiesIssuesPoules || []),
-    vainqueursSeiziemePourHuitiemes16: r16,
-    vainqueursHuitiemesPourQuarts8: qf,
-    vainqueursQuartsPourDemis4: sf,
-    finalistesChoisis: finalists,
-    troisiemePlaceChoix: third,
-    vainqueurFinal: winner,
-  };
+  const fifaList32 = list32FromOfficialKoMatchups();
+  const hasOfficialKo = fifaList32.length > 0;
+
+  if (hasOfficialKo) {
+    syncSeiziemeParMatchR32FromOfficial();
+    state.equipesQualifiees32Liste = [...fifaList32];
+  } else {
+    state.seiziemeParMatchR32 = {};
+    Object.entries(eng.R32_SIDE).forEach(([m, p]) => {
+      state.seiziemeParMatchR32['M' + m] = { left: p.left || '', right: p.right || '' };
+    });
+    state.equipesQualifiees32Liste = eng.list32.length === 32 ? [...eng.list32] : (state.equipesQualifiees32Liste || []);
+  }
+
+  if (rebuildBareme) {
+    const r16 = collectWinners(73, 88);
+    const qf = collectWinners(89, 96);
+    const sf = collectWinners(97, 100);
+    const finalists = collectWinners(101, 102);
+    const winner = koWinnerFromScores(104);
+    const third = koWinnerFromScores(103);
+    const prev = state.phaseFinalePourBareme || {};
+    let liste32;
+    if (hasOfficialKo) {
+      liste32 = [...fifaList32];
+    } else if (eng.list32.length === 32) {
+      liste32 = [...eng.list32];
+    } else {
+      liste32 = prev.liste32QualifiesIssuesPoules || [];
+    }
+    state.phaseFinalePourBareme = {
+      liste32QualifiesIssuesPoules: liste32,
+      vainqueursSeiziemePourHuitiemes16: r16,
+      vainqueursHuitiemesPourQuarts8: qf,
+      vainqueursQuartsPourDemis4: sf,
+      finalistesChoisis: finalists,
+      troisiemePlaceChoix: third,
+      vainqueurFinal: winner,
+    };
+  }
+
   syncBonusFromMatchStats();
   updateMatchStatsBars();
+  updateBaremeStatusBar();
 }
 
 function updateUndoUI() {
@@ -963,6 +1153,8 @@ function closeConfirmDialog(result) {
 function closeImportOverlay() {
   document.getElementById('import-overlay').classList.add('hidden');
   pendingImportRows = [];
+  pendingImportFixtures = [];
+  pendingImportSkipped = [];
   pendingImportMode = 'poule-scores';
 }
 
@@ -984,7 +1176,7 @@ function importOverwriteLabel(mode) {
 
 function importEmptyMessage(mode) {
   if (mode === 'ko-teams') {
-    return 'Aucun affrontement KO vide à importer.<br>Tous déjà saisis, ou FIFA n’a pas encore confirmé les deux équipes.';
+    return 'Aucun affrontement KO vide à importer via l’API.<br>Saisie manuelle possible — worldcup26 peut être en retard sur FIFA.';
   }
   if (mode === 'ko-scores') {
     return 'Aucun score KO vide à importer.<br>Matchs non terminés, équipes TBD, ou scores déjà saisis.';
@@ -995,13 +1187,13 @@ function importEmptyMessage(mode) {
 function renderImportOverlayList(rows) {
   const list = document.getElementById('import-live-list');
   const mode = pendingImportMode;
+  let html = '';
   if (!rows.length) {
-    list.innerHTML = '<p class="import-live-empty">' + importEmptyMessage(mode) + '</p>';
+    html += '<p class="import-live-empty">' + importEmptyMessage(mode) + '</p>';
     document.getElementById('import-apply').disabled = true;
-    return;
-  }
-  document.getElementById('import-apply').disabled = false;
-  list.innerHTML = rows.map((r, i) => {
+  } else {
+    document.getElementById('import-apply').disabled = false;
+    html += rows.map((r, i) => {
     if (mode === 'ko-teams') {
       const cur = getKoTeams(r.mid);
       const hasCur = String(cur[0] || '').trim() && String(cur[1] || '').trim();
@@ -1040,7 +1232,20 @@ function renderImportOverlayList(rows) {
       <span class="import-score">${r.scoreHome}–${r.scoreAway}</span>
       <span class="import-badge">${escapeAttr(r.sourceLabel)}</span>
     </label>`;
-  }).join('');
+    }).join('');
+  }
+  if (mode === 'ko-teams' && pendingImportSkipped.length) {
+    html += '<p class="hint" style="margin:.75rem 0 .35rem">Non importables (worldcup26 en retard — saisie manuelle) :</p>';
+    html += pendingImportSkipped.map((r) =>
+      `<div class="import-live-row import-skipped" style="opacity:.75;cursor:default">
+        <span class="import-mid">M${r.mid}</span>
+        <span class="import-teams">${escapeAttr(r.home)} – ${escapeAttr(r.away)}</span>
+        <span class="import-score">—</span>
+        <span class="import-badge">${escapeAttr(r.reason)}</span>
+      </div>`
+    ).join('');
+  }
+  list.innerHTML = html;
 }
 
 function openImportOverlay(rows, meta, mode) {
@@ -1055,6 +1260,13 @@ function openImportOverlay(rows, meta, mode) {
   document.getElementById('import-live-meta').textContent = meta;
   document.getElementById('import-overwrite-label').textContent = importOverwriteLabel(pendingImportMode);
   document.getElementById('import-overwrite').checked = false;
+  const baremeWrap = document.getElementById('import-bareme-wrap');
+  const isKoImport = pendingImportMode === 'ko-teams' || pendingImportMode === 'ko-scores';
+  if (baremeWrap) baremeWrap.classList.toggle('hidden', !isKoImport);
+  if (isKoImport) {
+    const baremeCb = document.getElementById('import-rebuild-bareme');
+    if (baremeCb) baremeCb.checked = true;
+  }
   renderImportOverlayList(rows);
   document.getElementById('import-overlay').classList.remove('hidden');
 }
@@ -1108,7 +1320,14 @@ async function startKoTeamsImport() {
   status.classList.remove('err');
   try {
     const payload = await CDM_WC26.fetchKnockoutFixtures();
-    const rows = CDM_WC26.proposeKoTeamImports(payload.fixtures, {
+    pendingImportFixtures = payload.fixtures || [];
+    pendingImportSkipped = CDM_WC26.listKoTeamImportSkipped(pendingImportFixtures, {
+      knownNations: NATIONS,
+      onlyEmpty: true,
+      isSlotEmpty: isKoSlotEmpty,
+    });
+    const rows = CDM_WC26.proposeKoTeamImports(pendingImportFixtures, {
+      knownNations: NATIONS,
       onlyEmpty: true,
       isSlotEmpty: isKoSlotEmpty,
     });
@@ -1139,7 +1358,10 @@ async function startKoScoresImport() {
   status.classList.remove('err');
   try {
     const payload = await CDM_WC26.fetchKnockoutFixtures();
-    const rows = CDM_WC26.proposeKoScoreImports(payload.fixtures, {
+    pendingImportFixtures = payload.fixtures || [];
+    pendingImportSkipped = [];
+    const rows = CDM_WC26.proposeKoScoreImports(pendingImportFixtures, {
+      knownNations: NATIONS,
       includeLive: true,
       onlyEmpty: true,
       isScoreEmpty: isKoScoreSlotEmpty,
@@ -1218,14 +1440,20 @@ function applyKoTeamsImport() {
       return;
     }
     if (!state.matchsEliminationOfficiels) state.matchsEliminationOfficiels = {};
-    state.matchsEliminationOfficiels[key] = { home: r.home, away: r.away };
+    state.matchsEliminationOfficiels[key] = { home: canonicalTeamName(r.home), away: canonicalTeamName(r.away) };
     applied++;
   });
+  if (window.CDM_WC26?.mergeKickoffsIntoState && pendingImportFixtures.length) {
+    CDM_WC26.mergeKickoffsIntoState(state, pendingImportFixtures);
+  }
   renderMatchSections();
   renderKoScores();
+  syncDerivedFields({ rebuildBareme: importRebuildBaremeChecked() });
   closeImportOverlay();
   let msg = `${applied} affrontement(s) appliqué(s) au brouillon.`;
   if (skipped) msg += ` ${skipped} ignoré(s) (déjà renseignés — cochez « Remplacer »).`;
+  const bareme = baremeKoSummary();
+  if (bareme && importRebuildBaremeChecked()) msg += ` Barème : ${bareme}.`;
   showMsg(msg + ' Équipes visibles dans Phase finale — scores. Publiez pour l’étape 3 côté joueurs.');
 }
 
@@ -1253,12 +1481,15 @@ function applyKoScoresImport() {
     const away = ta || r.away;
     if (!state.matchsEliminationOfficiels) state.matchsEliminationOfficiels = {};
     if (!String(th || '').trim() || !String(ta || '').trim()) {
-      state.matchsEliminationOfficiels[String(r.mid)] = { home: r.home, away: r.away };
+      state.matchsEliminationOfficiels[String(r.mid)] = { home: canonicalTeamName(r.home), away: canonicalTeamName(r.away) };
     }
     setKoScore(r.mid, home, away, String(r.scoreHome), String(r.scoreAway));
     applied++;
   });
-  syncDerivedFields();
+  if (window.CDM_WC26?.mergeKickoffsIntoState && pendingImportFixtures.length) {
+    CDM_WC26.mergeKickoffsIntoState(state, pendingImportFixtures);
+  }
+  syncDerivedFields({ rebuildBareme: importRebuildBaremeChecked() });
   renderMatchSections();
   renderKoScores();
   closeImportOverlay();
@@ -1266,6 +1497,8 @@ function applyKoScoresImport() {
   let msg = `${applied} score(s) KO appliqué(s) au brouillon.`;
   if (skipped) msg += ` ${skipped} ignoré(s) (déjà saisis — cochez « Remplacer »).`;
   if (liveN) msg += ` ${liveN} en cours : vérifiez avant publication.`;
+  const bareme = baremeKoSummary();
+  if (bareme && importRebuildBaremeChecked()) msg += ` Barème : ${bareme}.`;
   showMsg(msg + ' Publiez quand c’est bon.');
 }
 
@@ -1470,6 +1703,7 @@ async function loadState() {
   if (!state.vainqueursTableauElimination) state.vainqueursTableauElimination = {};
   if (!state.bonus) state.bonus = {};
   if (!state.phaseFinalePourBareme) state.phaseFinalePourBareme = {};
+  if (!state.heuresCoupEnvoiKo) state.heuresCoupEnvoiKo = {};
   draftEtape = state.etapeDebloquee || 0;
   const savedToken = localStorage.getItem('cdm_org_gh_token');
   if (savedToken) document.getElementById('gh-token').value = savedToken;
@@ -1743,6 +1977,17 @@ function renderMatchSections() {
         renderKoScores();
       }
     });
+    inp.addEventListener('blur', () => {
+      const mid = String(inp.dataset.mid);
+      const side = inp.dataset.side;
+      const canon = canonicalTeamName(inp.value);
+      if (canon !== inp.value.trim()) {
+        inp.value = canon;
+        if (!state.matchsEliminationOfficiels[mid]) state.matchsEliminationOfficiels[mid] = { home: '', away: '' };
+        state.matchsEliminationOfficiels[mid][side] = canon;
+      }
+      syncDerivedFields();
+    });
   });
 }
 
@@ -2014,6 +2259,7 @@ function clearPreview() {
 
 function renderAll() {
   ensureMatchIds();
+  syncDerivedFields();
   renderEtapePicker();
   renderPoules();
   renderMatchSections();

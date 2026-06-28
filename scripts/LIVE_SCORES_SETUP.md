@@ -47,9 +47,25 @@ Onglet **Poules** → **Importer scores du jour (live)** :
 
 Onglet **Phase finale — tableau** → **Importer affrontements FIFA** :
 - Source worldcup26 (M73–M104, équipes confirmées uniquement)
-- Seulement les affrontements **encore vides**
+- Seulement les affrontements **encore vides** (ou « Remplacer »)
+- Alimente **`phaseFinalePourBareme.liste32QualifiesIssuesPoules`** dès que des seizièmes sont connus (3 pts/équipe, étape 2) — **sans attendre les 72 poules**
+- Option « Mettre à jour le barème tableau » dans la fenêtre d’import (cochée par défaut)
 - Publiez + **étape 3** pour que les joueurs pronostiquent les seizièmes
 
 Onglet **Phase finale — scores** → **Importer scores KO (live)** :
 - Matchs KO terminés ou en cours, scores vides uniquement
 - Complète aussi le tableau si une équipe manquait
+- Met à jour les **vainqueurs** du barème (`vainqueursSeiziemePourHuitiemes16`, huitièmes, quarts, etc.) au fur et à mesure des scores officiels
+
+## Limites worldcup26
+
+L’API communautaire peut **retarder** FIFA (placeholders « Winner Group … »). L’import liste alors les matchs **non importables** — saisie manuelle dans *Phase finale — tableau*. Les noms sont normalisés (`Sénégal`, pas `Senegal`).
+
+## Pronos KO — verrouillage par coup d’envoi
+
+- Étapes 3–7 débloquent les tours ; chaque match reste modifiable **jusqu’à son coup d’envoi** (`heuresCoupEnvoiKo` dans `resultats.json`).
+- Heure inconnue → pas de verrou automatique. Score officiel publié → verrou immédiat.
+
+## Bonus poules (auto à la publication)
+
+Matchs 0-0, nations à 9 pts, meilleure attaque (12 groupes complets), CSC, CR, total buts.

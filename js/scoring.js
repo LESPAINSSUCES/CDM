@@ -64,7 +64,44 @@
   }
 
   function normalizeTeam(s) {
-    return String(s ?? '').trim().toLowerCase();
+    return String(s ?? '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{M}/gu, '')
+      .replace(/\s+/g, ' ');
+  }
+
+  /** 32 seizièmes dérivés des affrontements officiels M73–M88 si le barème n’est pas rempli. */
+  function deriveList32FromOfficialKo(resultats) {
+    const teams = new Set();
+    const meo = resultats?.matchsEliminationOfficiels || {};
+    const r32 = resultats?.seiziemeParMatchR32 || {};
+    for (let m = 73; m <= 88; m++) {
+      let home = '';
+      let away = '';
+      for (const k of [String(m), 'M' + m]) {
+        const pair = meo[k];
+        if (pair?.home) home = pair.home;
+        if (pair?.away) away = pair.away;
+      }
+      const slot = r32['M' + m];
+      if (!home && slot?.left) home = slot.left;
+      if (!away && slot?.right) away = slot.right;
+      if (home && away) {
+        teams.add(home);
+        teams.add(away);
+      }
+    }
+    return [...teams];
+  }
+
+  function getList32Real(resultats) {
+    const real = resultats?.phaseFinalePourBareme || {};
+    if (real.liste32QualifiesIssuesPoules?.length) return real.liste32QualifiesIssuesPoules;
+    if (resultats?.equipesQualifiees32Liste?.length) return resultats.equipesQualifiees32Liste;
+    const derived = deriveList32FromOfficialKo(resultats);
+    return derived.length ? derived : [];
   }
 
   function matchOutcome(h, a) {
@@ -163,9 +200,7 @@
     const etape = getEtape(resultats, etapeOverride);
     const pred = buildPredBareme(participant);
     const real = resultats.phaseFinalePourBareme || {};
-    const list32Real = real.liste32QualifiesIssuesPoules?.length
-      ? real.liste32QualifiesIssuesPoules
-      : (resultats.equipesQualifiees32Liste || []);
+    const list32Real = getList32Real(resultats);
     let pts = 0;
     if (etape >= TABLEAU_ROUND_UNLOCK.l32) {
       pts += setIntersectionScore(pred.liste32QualifiesIssuesPoules, list32Real, 3);
@@ -336,9 +371,7 @@
     const etape = getEtape(resultats, etapeOverride);
     const pred = buildPredBareme(participant);
     const real = resultats.phaseFinalePourBareme || {};
-    const list32Real = real.liste32QualifiesIssuesPoules?.length
-      ? real.liste32QualifiesIssuesPoules
-      : (resultats.equipesQualifiees32Liste || []);
+    const list32Real = getList32Real(resultats);
     if (etape < 2 && !list32Real.length) return [];
 
     const roundDefs = [
@@ -400,7 +433,7 @@
 
   function teamInOfficialTableauSet(team, roundKey, resultats) {
     const real = resultats.phaseFinalePourBareme || {};
-    const list32 = real.liste32QualifiesIssuesPoules?.length ? real.liste32QualifiesIssuesPoules : (resultats.equipesQualifiees32Liste || []);
+    const list32 = getList32Real(resultats);
     const map = {
       l32: list32,
       r16: real.vainqueursSeiziemePourHuitiemes16,
@@ -426,6 +459,8 @@
     KO_MATCH_MAX,
     parseIntSafe,
     normalizeTeam,
+    deriveList32FromOfficialKo,
+    getList32Real,
     matchOutcome,
     getEtape,
     koMidEtape,

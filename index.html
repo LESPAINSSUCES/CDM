@@ -2588,7 +2588,8 @@ body.grille-remote-locked #player-code-input {
 <script src="js/supabase-api.js"></script>
 <script src="js/fifa-rankings.js"></script>
 <script src="js/poule-votes.js"></script>
-<script src="js/scoring.js?v=5"></script>
+<script src="js/worldcup26-api.js?v=4"></script>
+<script src="js/scoring.js?v=7"></script>
 <script>
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const NATIONS = [
@@ -2827,7 +2828,9 @@ const QUICK_SCORES = [0, 1, 2, 3, 4];
 const MORE_SCORES = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 let scoreSheetTarget = null;
 
-let OFFICIAL = { etapeDebloquee: 0, matchsEliminationOfficiels: {} };
+let OFFICIAL = { etapeDebloquee: 0, matchsEliminationOfficiels: {}, heuresCoupEnvoiKo: {} };
+/** Heures coup d'envoi M73–M104 (ISO) — API + resultats.json */
+let KO_KICKOFFS = {};
 const ORG_PIN_HASH = 'b5fba5acc2c2dfaf6003166625a8de638260a920e1143d7eba941aa8ca259b7d';
 const BONUS_OTHER_CHOICE = 'Autre';
 const BONUS_PICKER_IDS = ['b5', 'b6', 'b7'];
@@ -3551,6 +3554,45 @@ function isEtapeEditable(n) {
   return effectiveEtapeDebloquee() === n;
 }
 
+function koKickoffMs(mid) {
+  const k = String(mid);
+  const iso = KO_KICKOFFS[k] || KO_KICKOFFS['M' + mid]
+    || OFFICIAL.heuresCoupEnvoiKo?.[k] || OFFICIAL.heuresCoupEnvoiKo?.['M' + mid];
+  if (!iso) return null;
+  const t = Date.parse(iso);
+  return Number.isFinite(t) ? t : null;
+}
+
+function isOfficialKoScoreLocked(mid) {
+  const keys = [String(mid), 'M' + mid, 'Match ' + mid];
+  for (const k of keys) {
+    const sc = OFFICIAL.scoresElimination?.[k];
+    if (!sc) continue;
+    const h = parseScoreVal(sc.scoreHome);
+    const a = parseScoreVal(sc.scoreAway);
+    if (Number.isFinite(h) && Number.isFinite(a)) return true;
+  }
+  return false;
+}
+
+function koMidLockReason(mid) {
+  const n = koMidToEtape(mid);
+  if (n == null || !isEtapeUnlocked(n)) return 'Étape non débloquée';
+  if (isOfficialKoScoreLocked(mid)) return 'Score officiel publié';
+  const ko = koKickoffMs(mid);
+  if (ko != null && Date.now() >= ko) {
+    const label = window.CDM_WC26?.formatKickoffParis?.(new Date(ko).toISOString()) || '';
+    return label ? `Coup d'envoi passé (${label})` : 'Coup d\'envoi passé';
+  }
+  return '';
+}
+
+function countKoEditableInRange(min, max) {
+  let n = 0;
+  for (let m = min; m <= max; m++) if (isKoMidEditable(m)) n++;
+  return n;
+}
+
 function koMidToEtape(mid) {
   const def = ETAPE_KO.find(d => mid >= d.min && mid <= d.max);
   return def ? def.n : null;
@@ -3558,7 +3600,11 @@ function koMidToEtape(mid) {
 
 function isKoMidEditable(mid) {
   const n = koMidToEtape(mid);
-  return n != null && isEtapeEditable(n);
+  if (n == null || !isEtapeUnlocked(n)) return false;
+  if (isOfficialKoScoreLocked(mid)) return false;
+  const ko = koKickoffMs(mid);
+  if (ko != null && Date.now() >= ko) return false;
+  return true;
 }
 
 function syncStageLockUI() {
@@ -3777,7 +3823,9 @@ function onKoScoreChanged(mid) {
   updateKoMatchDisplay(mid);
 }
 
-function createOfficialScoreCard(mid, editable, isPast) {
+function createOfficialScoreCard(mid) {
+  const matchEditable = isKoMidEditable(mid);
+  const lockReason = matchEditable ? '' : koMidLockReason(mid);
   const [teamA, teamB] = getOfficialMatchTeams(mid);
     const pick = kosWinners[mid];
   const h = getScoreRaw(koInputId(mid, 'h'));
@@ -3786,7 +3834,7 @@ function createOfficialScoreCard(mid, editable, isPast) {
   const aVal = parseScoreVal(a);
   const ready = !!(teamA && teamB);
   const bothScores = Number.isFinite(hVal) && Number.isFinite(aVal);
-  const isDraw = ready && bothScores && hVal === aVal && editable;
+  const isDraw = ready && bothScores && hVal === aVal && matchEditable;
   let activeWinner = null;
   if (ready && bothScores) {
     if (hVal > aVal) activeWinner = teamA;
@@ -3798,11 +3846,15 @@ function createOfficialScoreCard(mid, editable, isPast) {
   el.className = 'tv-board match-card ko-match-card ' + fillCls + (ready ? ' ready' : ' ko-wait');
   el.dataset.koMid = mid;
   let html = `<div class="ko-meta">${metaKo(mid)}</div>`;
+  const kickIso = KO_KICKOFFS[String(mid)] || OFFICIAL.heuresCoupEnvoiKo?.[String(mid)];
+  if (kickIso && window.CDM_WC26?.formatKickoffParis) {
+    const kickLbl = CDM_WC26.formatKickoffParis(kickIso);
+    if (kickLbl) html += `<p class="ko-wait-msg" style="margin:.25rem 0 0">Coup d'envoi : ${escapeHtml(kickLbl)}</p>`;
+  }
   html += buildScoreboardHTML('display-km' + mid, teamA || '—', teamB || '—', h, a);
   if (ready) {
-    if (editable) html += buildTvScoreRow(koInputId(mid, 'h'), koInputId(mid, 'a'), 'group', teamA, teamB);
-    else if (isPast) html += '<p class="ko-wait-msg">Étape passée — consultation seule.</p>';
-    else html += '<p class="ko-wait-msg">Saisie ouverte quand l’étape est débloquée.</p>';
+    if (matchEditable) html += buildTvScoreRow(koInputId(mid, 'h'), koInputId(mid, 'a'), 'group', teamA, teamB);
+    else html += `<p class="ko-wait-msg">${escapeHtml(lockReason || 'Consultation seule.')}</p>`;
   } else {
     html += '<p class="ko-wait-msg">Affrontement officiel pas encore publié.</p>';
   }
@@ -4178,21 +4230,22 @@ function renderEtapeScores() {
   root.innerHTML = '';
   ETAPE_KO.forEach(def => {
     const visible = isEtapeUnlocked(def.n);
-    const editable = isEtapeEditable(def.n);
-    const isPast = visible && !editable;
+    const editableCount = visible ? countKoEditableInRange(def.min, def.max) : 0;
     const prog = countEtapeScoreProgress(def.min, def.max);
     const section = document.createElement('div');
     let sectionCls = 'etape-score-section';
     if (!visible) sectionCls += ' locked-section';
-    else if (isPast) sectionCls += ' past-section';
+    else if (!editableCount) sectionCls += ' past-section';
     section.className = sectionCls;
-    const badgeCls = editable ? 'open' : (isPast ? 'past' : 'lock');
-    const badgeText = editable ? 'Ouvert — saisir les scores' : (isPast ? 'Passé — lecture seule' : 'Verrouillé');
+    const badgeCls = editableCount ? 'open' : (visible ? 'past' : 'lock');
+    const badgeText = !visible
+      ? 'Verrouillé'
+      : (editableCount ? `Ouvert — ${editableCount} match(s) jusqu'au coup d'envoi` : 'Fermé — coups d\'envoi passés');
     section.innerHTML = `
       <div class="etape-score-section-head${visible ? ' open' : ''}">
         <div>
           <strong>${def.title}</strong>
-          <div class="etape-score-progress">Deadline ${def.deadline}${prog.total ? ' · ' + prog.done + '/' + prog.total + ' scores' : ''}</div>
+          <div class="etape-score-progress">${prog.total ? prog.done + '/' + prog.total + ' scores' : 'Affrontements officiels requis'}${editableCount ? ' · modifiables jusqu\'à l\'heure du match' : ''}</div>
         </div>
         <span class="etape-score-badge ${badgeCls}">${badgeText}</span>
       </div>
@@ -4204,9 +4257,9 @@ function renderEtapeScores() {
       list.innerHTML = '<p style="font-size:.82rem;color:var(--muted);margin:0">Disponible quand l’organisateur débloque l’étape ' + def.n + ' dans resultats.json.</p>';
     } else {
       for (let m = def.min; m <= def.max; m++) {
-        list.appendChild(createOfficialScoreCard(m, editable, isPast));
+        list.appendChild(createOfficialScoreCard(m));
       }
-      if (editable) wireScorePickers(list);
+      if (editableCount) wireScorePickers(list);
     }
     section.querySelector('.etape-score-section-head').addEventListener('click', () => {
       if (!visible) return;
@@ -4306,6 +4359,15 @@ function qualifies32Liste() {
   return [...s];
 }
 
+async function loadKoKickoffs() {
+  KO_KICKOFFS = { ...(OFFICIAL.heuresCoupEnvoiKo || {}) };
+  if (!window.CDM_WC26?.fetchKnockoutFixtures) return;
+  try {
+    const payload = await CDM_WC26.fetchKnockoutFixtures();
+    Object.assign(KO_KICKOFFS, CDM_WC26.buildKickoffMap(payload.fixtures || []));
+  } catch (e) { /* fallback heures publiées dans resultats.json */ }
+}
+
 async function loadOfficialResultats() {
   try {
     const r = await fetch('data/resultats.json?' + Date.now());
@@ -4313,8 +4375,10 @@ async function loadOfficialResultats() {
       const data = await r.json();
       OFFICIAL = { ...OFFICIAL, ...data };
       if (!OFFICIAL.matchsEliminationOfficiels) OFFICIAL.matchsEliminationOfficiels = {};
+      if (!OFFICIAL.heuresCoupEnvoiKo) OFFICIAL.heuresCoupEnvoiKo = {};
     }
   } catch (e) { /* offline / file:// */ }
+  await loadKoKickoffs();
 }
 
 // ─── TAB SWITCHING ───────────────────────────────────────────────────────────
@@ -5645,7 +5709,14 @@ if (location.hash) {
   const tab = TAB_HASH_ALIASES[raw] || raw;
   if (document.getElementById('tab-' + tab)) goToTab(tab);
 }
-loadOfficialResultats().then(() => fullRefreshDerived());
+loadOfficialResultats().then(() => {
+  fullRefreshDerived();
+  setInterval(() => {
+    if (document.getElementById('tab-scores-finales')?.classList.contains('active')) {
+      renderEtapeScores();
+    }
+  }, 60000);
+});
 </script>
 </body>
 </html>

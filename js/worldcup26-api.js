@@ -108,6 +108,7 @@
     const elapsedRaw = String(f.status?.elapsedRaw || '').trim().toLowerCase();
     let short = f.status?.short || 'NS';
     if (short === 'NS' && elapsedRaw === 'finished') short = 'FT';
+    const kickoffIso = f.fixture?.date || null;
     return {
       home,
       away,
@@ -121,8 +122,66 @@
       koType: f.koType || '',
       homeTeamId: f.homeTeamId || '0',
       awayTeamId: f.awayTeamId || '0',
+      kickoffIso,
       raw: f,
     };
+  }
+
+  function isKnownNationName(name, knownNations) {
+    const n = normTeam(teamLabel(name));
+    if (!n) return false;
+    return (knownNations || []).some((t) => normTeam(t) === n);
+  }
+
+  function koTeamAcceptable(name, knownNations) {
+    const n = teamLabel(name);
+    if (!n) return false;
+    if (isRealKoTeam(n)) return true;
+    return isKnownNationName(n, knownNations);
+  }
+
+  /** M73–M104 → ISO 8601 (UTC) depuis fixtures normalisées. */
+  function buildKickoffMap(fixtures, opts = {}) {
+    const minMid = opts.minMid ?? 73;
+    const maxMid = opts.maxMid ?? 104;
+    const out = {};
+    (fixtures || []).forEach((fx) => {
+      const mid = parseInt(String(fx.matchId || ''), 10);
+      if (!Number.isFinite(mid) || mid < minMid || mid > maxMid) return;
+      const iso = fx.kickoffIso || fx.fixture?.date || '';
+      if (iso) out[String(mid)] = iso;
+    });
+    return out;
+  }
+
+  function mergeKickoffsIntoState(state, fixtures, opts = {}) {
+    if (!state) return {};
+    if (!state.heuresCoupEnvoiKo) state.heuresCoupEnvoiKo = {};
+    const incoming = buildKickoffMap(fixtures, opts);
+    Object.assign(state.heuresCoupEnvoiKo, incoming);
+    return incoming;
+  }
+
+  function formatKickoffParis(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (!Number.isFinite(d.getTime())) return '';
+    return d.toLocaleString('fr-FR', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/Paris',
+    });
+  }
+
+  function koImportSkipReason(home, away, knownNations) {
+    const h = teamLabel(home);
+    const a = teamLabel(away);
+    if (!koTeamAcceptable(h, knownNations)) return `Domicile non confirmé (${h || '—'})`;
+    if (!koTeamAcceptable(a, knownNations)) return `Extérieur non confirmé (${a || '—'})`;
+    return '';
   }
 
   function isPlaceholderTeam(name) {
@@ -276,6 +335,7 @@
     const maxMid = opts.maxMid ?? 104;
     const onlyEmpty = opts.onlyEmpty !== false;
     const isSlotEmpty = typeof opts.isSlotEmpty === 'function' ? opts.isSlotEmpty : null;
+    const knownNations = opts.knownNations || null;
     const out = [];
 
     fixtures.forEach((fx) => {
@@ -283,17 +343,39 @@
       if (!Number.isFinite(mid) || mid < minMid || mid > maxMid) return;
       const home = teamLabel(fx.home);
       const away = teamLabel(fx.away);
-      if (!isRealKoTeam(home) || !isRealKoTeam(away)) return;
+      if (!koTeamAcceptable(home, knownNations) || !koTeamAcceptable(away, knownNations)) return;
       if (onlyEmpty && isSlotEmpty && !isSlotEmpty(mid)) return;
       out.push({
         mid,
         home,
         away,
         koType: fx.koType || '',
+        kickoffIso: fx.kickoffIso || '',
         sourceLabel: koTypeLabel(fx.koType),
       });
     });
 
+    out.sort((a, b) => a.mid - b.mid);
+    return out;
+  }
+
+  /** Matchs KO visibles mais non importables (worldcup26 en retard / placeholder). */
+  function listKoTeamImportSkipped(fixtures, opts = {}) {
+    const minMid = opts.minMid ?? 73;
+    const maxMid = opts.maxMid ?? 104;
+    const knownNations = opts.knownNations || null;
+    const importable = new Set(proposeKoTeamImports(fixtures, { ...opts, onlyEmpty: false }).map((r) => r.mid));
+    const out = [];
+    fixtures.forEach((fx) => {
+      const mid = parseInt(String(fx.matchId || ''), 10);
+      if (!Number.isFinite(mid) || mid < minMid || mid > maxMid) return;
+      if (importable.has(mid)) return;
+      const home = teamLabel(fx.home);
+      const away = teamLabel(fx.away);
+      const reason = koImportSkipReason(home, away, knownNations);
+      if (!reason) return;
+      out.push({ mid, home, away, reason, koType: fx.koType || '' });
+    });
     out.sort((a, b) => a.mid - b.mid);
     return out;
   }
@@ -314,7 +396,7 @@
       const mid = parseInt(String(fx.matchId || ''), 10);
       if (!Number.isFinite(mid) || mid < minMid || mid > maxMid) return;
       if (fx.scoreHome == null || fx.scoreAway == null) return;
-      if (!isRealKoTeam(fx.home) || !isRealKoTeam(fx.away)) return;
+      if (!koTeamAcceptable(fx.home, opts.knownNations) || !koTeamAcceptable(fx.away, opts.knownNations)) return;
       if (onlyFinished && !fx.isFinished) return;
       if (!includeLive && fx.isLive && !fx.isFinished) return;
       if (!fx.isLive && !fx.isFinished) return;
@@ -350,7 +432,12 @@
     buildPouleIndex,
     proposePouleImports,
     proposeKoTeamImports,
+    listKoTeamImportSkipped,
     proposeKoScoreImports,
+    buildKickoffMap,
+    mergeKickoffsIntoState,
+    formatKickoffParis,
+    koTeamAcceptable,
     isPlaceholderTeam,
     isRealKoTeam,
     koTypeLabel,
