@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-06-27",
+    "misAJour": "2026-06-28",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 3,
@@ -470,14 +470,18 @@
     "Match 71": {
       "home": "Jordanie",
       "away": "Argentine",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "3",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 72": {
       "home": "Algérie",
       "away": "Autriche",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "3",
+      "scoreAway": "3",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 21": {
       "home": "Portugal",
@@ -514,14 +518,18 @@
     "Match 69": {
       "home": "Colombie",
       "away": "Portugal",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "0",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 70": {
       "home": "RD Congo",
       "away": "Ouzbékistan",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "3",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 22": {
       "home": "Angleterre",
@@ -558,17 +566,54 @@
     "Match 67": {
       "home": "Panama",
       "away": "Angleterre",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "0",
+      "scoreAway": "2",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 68": {
       "home": "Croatie",
       "away": "Ghana",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "2",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     }
   },
-  "equipesQualifiees32Liste": [],
+  "equipesQualifiees32Liste": [
+    "Afrique du Sud",
+    "Canada",
+    "Allemagne",
+    "Bosnie Herzégovine",
+    "Pays-Bas",
+    "Maroc",
+    "Brésil",
+    "Japon",
+    "France",
+    "Paraguay",
+    "Côte d'Ivoire",
+    "Norvège",
+    "Mexique",
+    "Équateur",
+    "Angleterre",
+    "RD Congo",
+    "États-Unis",
+    "Suède",
+    "Belgique",
+    "Corée du Sud",
+    "Portugal",
+    "Croatie",
+    "Espagne",
+    "Autriche",
+    "Suisse",
+    "Algérie",
+    "Argentine",
+    "Cap Vert",
+    "Colombie",
+    "Ghana",
+    "Australie",
+    "Égypte"
+  ],
   "matchsEliminationOfficiels": {
     "73": {
       "home": "Afrique du Sud",
@@ -699,9 +744,107 @@
       "away": ""
     }
   },
-  "seiziemeParMatchR32": {},
+  "seiziemeParMatchR32": {
+    "M73": {
+      "left": "Afrique du Sud",
+      "right": "Canada"
+    },
+    "M74": {
+      "left": "Allemagne",
+      "right": "Bosnie Herzégovine"
+    },
+    "M75": {
+      "left": "Pays-Bas",
+      "right": "Maroc"
+    },
+    "M76": {
+      "left": "Brésil",
+      "right": "Japon"
+    },
+    "M77": {
+      "left": "France",
+      "right": "Paraguay"
+    },
+    "M78": {
+      "left": "Côte d'Ivoire",
+      "right": "Norvège"
+    },
+    "M79": {
+      "left": "Mexique",
+      "right": "Équateur"
+    },
+    "M80": {
+      "left": "Angleterre",
+      "right": "RD Congo"
+    },
+    "M81": {
+      "left": "États-Unis",
+      "right": "Suède"
+    },
+    "M82": {
+      "left": "Belgique",
+      "right": "Corée du Sud"
+    },
+    "M83": {
+      "left": "Portugal",
+      "right": "Croatie"
+    },
+    "M84": {
+      "left": "Espagne",
+      "right": "Autriche"
+    },
+    "M85": {
+      "left": "Suisse",
+      "right": "Algérie"
+    },
+    "M86": {
+      "left": "Argentine",
+      "right": "Cap Vert"
+    },
+    "M87": {
+      "left": "Colombie",
+      "right": "Ghana"
+    },
+    "M88": {
+      "left": "Australie",
+      "right": "Égypte"
+    }
+  },
   "phaseFinalePourBareme": {
-    "liste32QualifiesIssuesPoules": [],
+    "liste32QualifiesIssuesPoules": [
+      "Afrique du Sud",
+      "Canada",
+      "Allemagne",
+      "Bosnie Herzégovine",
+      "Pays-Bas",
+      "Maroc",
+      "Brésil",
+      "Japon",
+      "France",
+      "Paraguay",
+      "Côte d'Ivoire",
+      "Norvège",
+      "Mexique",
+      "Équateur",
+      "Angleterre",
+      "RD Congo",
+      "États-Unis",
+      "Suède",
+      "Belgique",
+      "Corée du Sud",
+      "Portugal",
+      "Croatie",
+      "Espagne",
+      "Autriche",
+      "Suisse",
+      "Algérie",
+      "Argentine",
+      "Cap Vert",
+      "Colombie",
+      "Ghana",
+      "Australie",
+      "Égypte"
+    ],
     "vainqueursSeiziemePourHuitiemes16": [],
     "vainqueursHuitiemesPourQuarts8": [],
     "vainqueursQuartsPourDemis4": [],
@@ -715,7 +858,7 @@
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "196",
+    "nbButs": "215",
     "nbCartonsRouges": "10",
     "nbProlongations": "4",
     "nbCSC": "10"
