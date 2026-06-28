@@ -582,37 +582,37 @@
   },
   "equipesQualifiees32Liste": [
     "Afrique du Sud",
-    "Canada",
-    "Allemagne",
-    "Bosnie Herzégovine",
-    "Pays-Bas",
-    "Maroc",
-    "Brésil",
-    "Japon",
-    "France",
-    "Paraguay",
-    "Côte d'Ivoire",
-    "Norvège",
-    "Mexique",
-    "Équateur",
-    "Angleterre",
-    "RD Congo",
-    "États-Unis",
-    "Suède",
-    "Belgique",
-    "Corée du Sud",
-    "Portugal",
-    "Croatie",
-    "Espagne",
-    "Autriche",
-    "Suisse",
     "Algérie",
+    "Allemagne",
+    "Angleterre",
     "Argentine",
+    "Australie",
+    "Autriche",
+    "Belgique",
+    "Bosnie Herzégovine",
+    "Brésil",
+    "Canada",
     "Cap Vert",
     "Colombie",
+    "Côte d'Ivoire",
+    "Croatie",
+    "Égypte",
+    "Équateur",
+    "Espagne",
+    "États-Unis",
+    "France",
     "Ghana",
-    "Australie",
-    "Égypte"
+    "Japon",
+    "Maroc",
+    "Mexique",
+    "Norvège",
+    "Paraguay",
+    "Pays-Bas",
+    "Portugal",
+    "RDC",
+    "Sénégal",
+    "Suède",
+    "Suisse"
   ],
   "matchsEliminationOfficiels": {
     "73": {
@@ -751,7 +751,7 @@
     },
     "M74": {
       "left": "Allemagne",
-      "right": "Bosnie Herzégovine"
+      "right": "Paraguay"
     },
     "M75": {
       "left": "Pays-Bas",
@@ -763,7 +763,7 @@
     },
     "M77": {
       "left": "France",
-      "right": "Paraguay"
+      "right": "Suède"
     },
     "M78": {
       "left": "Côte d'Ivoire",
@@ -775,15 +775,15 @@
     },
     "M80": {
       "left": "Angleterre",
-      "right": "RD Congo"
+      "right": "RDC"
     },
     "M81": {
       "left": "États-Unis",
-      "right": "Suède"
+      "right": "Bosnie Herzégovine"
     },
     "M82": {
       "left": "Belgique",
-      "right": "Corée du Sud"
+      "right": "Sénégal"
     },
     "M83": {
       "left": "Portugal",
@@ -813,37 +813,37 @@
   "phaseFinalePourBareme": {
     "liste32QualifiesIssuesPoules": [
       "Afrique du Sud",
-      "Canada",
-      "Allemagne",
-      "Bosnie Herzégovine",
-      "Pays-Bas",
-      "Maroc",
-      "Brésil",
-      "Japon",
-      "France",
-      "Paraguay",
-      "Côte d'Ivoire",
-      "Norvège",
-      "Mexique",
-      "Équateur",
-      "Angleterre",
-      "RD Congo",
-      "États-Unis",
-      "Suède",
-      "Belgique",
-      "Corée du Sud",
-      "Portugal",
-      "Croatie",
-      "Espagne",
-      "Autriche",
-      "Suisse",
       "Algérie",
+      "Allemagne",
+      "Angleterre",
       "Argentine",
+      "Australie",
+      "Autriche",
+      "Belgique",
+      "Bosnie Herzégovine",
+      "Brésil",
+      "Canada",
       "Cap Vert",
       "Colombie",
+      "Côte d'Ivoire",
+      "Croatie",
+      "Égypte",
+      "Équateur",
+      "Espagne",
+      "États-Unis",
+      "France",
       "Ghana",
-      "Australie",
-      "Égypte"
+      "Japon",
+      "Maroc",
+      "Mexique",
+      "Norvège",
+      "Paraguay",
+      "Pays-Bas",
+      "Portugal",
+      "RDC",
+      "Sénégal",
+      "Suède",
+      "Suisse"
     ],
     "vainqueursSeiziemePourHuitiemes16": [],
     "vainqueursHuitiemesPourQuarts8": [],
@@ -861,6 +861,10 @@
     "nbButs": "215",
     "nbCartonsRouges": "10",
     "nbProlongations": "4",
-    "nbCSC": "10"
-  }
+    "nbCSC": "10",
+    "matchs00": "7",
+    "nationsA9pts": "3",
+    "meilleureAttaque": "France"
+  },
+  "heuresCoupEnvoiKo": {}
 }
