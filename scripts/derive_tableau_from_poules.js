@@ -207,12 +207,26 @@ function scoreForWinner(home, away, winner) {
   return { home, away, scoreHome: '1', scoreAway: '2', vainqueur: winner };
 }
 
+/** Aligne home/away de chaque match poule sur le calendrier officiel GROUPS (scores inchangés). */
+function normalizePouleMatchFixtures(grille) {
+  if (!grille.matchs) grille.matchs = {};
+  for (const rows of Object.values(GROUPS)) {
+    for (const [num, home, away] of rows) {
+      const key = 'Match ' + num;
+      if (!grille.matchs[key]) grille.matchs[key] = {};
+      grille.matchs[key].home = home;
+      grille.matchs[key].away = away;
+    }
+  }
+}
+
 function deriveTableau(grille, opts = {}) {
   const favored = opts.favoredTeam || grille._deriveMeta?.favoredTeam || 'Argentine';
   const scoresOnlyR32 = opts.scoresOnlyR32 !== false;
   const finalWinner = opts.finalWinner || favored;
   const finalists = opts.finalists || [favored, 'Espagne'];
 
+  normalizePouleMatchFixtures(grille);
   const eng = buildEngine(grille.matchs || {});
   if (!eng) throw new Error('72 matchs poules incomplets');
 
@@ -302,4 +316,4 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { deriveTableau, buildEngine, GROUPS, KNOCK_R32_DEF };
+module.exports = { deriveTableau, normalizePouleMatchFixtures, buildEngine, GROUPS, KNOCK_R32_DEF };

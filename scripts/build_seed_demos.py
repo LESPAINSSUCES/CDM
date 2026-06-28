@@ -44,7 +44,9 @@ def fix_scores_vainqueur(scores, old, new):
 def build_cursor(parts):
     """Prono IA : hosts + Amérique du Sud, Argentine championne vs Espagne."""
     p = strip_export(by_name(parts, "Cursor"))
+    poule_matchs = copy.deepcopy(p.get("matchs", {}))
     p = replace_team(p, "France", "Argentine")
+    p["matchs"] = poule_matchs
     p["identite"] = {
         "prenom": "Cursor",
         "nom": "Agent",
