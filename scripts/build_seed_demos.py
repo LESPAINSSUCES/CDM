@@ -138,6 +138,12 @@ def main():
         meta = payload.pop("_seedMeta", {})
         path = SEEDS / fname
         path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        if fname == "cursor-agent.json":
+            subprocess.run(
+                ["node", str(ROOT / "scripts" / "derive_tableau_from_poules.js"), str(path)],
+                cwd=str(ROOT),
+                check=True,
+            )
         print(
             fname,
             "->",
