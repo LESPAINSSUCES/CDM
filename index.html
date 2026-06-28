@@ -3858,7 +3858,10 @@ function applyKoFromScores(mid) {
   if (!Number.isFinite(h) || !Number.isFinite(a) || !teamA || !teamB) return;
   if (h > a) kosWinners[mid] = teamA;
   else if (a > h) kosWinners[mid] = teamB;
-  else delete kosWinners[mid];
+  else {
+    const pick = kosWinners[mid];
+    if (pick && pick !== teamA && pick !== teamB) delete kosWinners[mid];
+  }
 }
 
 function syncKoTieBreakOnCard(card, mid, teamA, teamB, matchEditable) {

@@ -1062,9 +1062,17 @@ function syncDerivedFields(opts = {}) {
   rebuildPouleEngine();
   if (!state.vainqueursTableauElimination) state.vainqueursTableauElimination = {};
   for (let m = 73; m <= 104; m++) {
+    const k = String(m);
     const w = koWinnerFromScores(m);
-    if (w) state.vainqueursTableauElimination[String(m)] = w;
-    else delete state.vainqueursTableauElimination[String(m)];
+    if (w) {
+      state.vainqueursTableauElimination[k] = w;
+    } else {
+      const sc = getKoScore(m);
+      const h = parseScore(sc.scoreHome);
+      const a = parseScore(sc.scoreAway);
+      const isDraw = Number.isFinite(h) && Number.isFinite(a) && h === a;
+      if (!isDraw) delete state.vainqueursTableauElimination[k];
+    }
   }
   const eng = engineCache;
   const fifaList32 = list32FromOfficialKoMatchups();
@@ -2092,6 +2100,7 @@ function renderKoScores() {
           b.addEventListener('click', () => {
             if (!state.vainqueursTableauElimination) state.vainqueursTableauElimination = {};
             state.vainqueursTableauElimination[tieKey] = t;
+            syncDerivedFields({ rebuildBareme: true });
             renderKoScores();
           });
           tie.appendChild(b);
