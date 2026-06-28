@@ -96,11 +96,32 @@
     return [...teams];
   }
 
+  function countCompleteKoPairings(resultats) {
+    let n = 0;
+    const meo = resultats?.matchsEliminationOfficiels || {};
+    const r32 = resultats?.seiziemeParMatchR32 || {};
+    for (let m = 73; m <= 88; m++) {
+      let home = '';
+      let away = '';
+      for (const k of [String(m), 'M' + m]) {
+        const pair = meo[k];
+        if (pair?.home) home = pair.home;
+        if (pair?.away) away = pair.away;
+      }
+      const slot = r32['M' + m];
+      if (!home && slot?.left) home = slot.left;
+      if (!away && slot?.right) away = slot.right;
+      if (home && away) n++;
+    }
+    return n;
+  }
+
   function getList32Real(resultats) {
+    const derived = deriveList32FromOfficialKo(resultats);
+    if (countCompleteKoPairings(resultats) >= 16 && derived.length) return derived;
     const real = resultats?.phaseFinalePourBareme || {};
     if (real.liste32QualifiesIssuesPoules?.length) return real.liste32QualifiesIssuesPoules;
     if (resultats?.equipesQualifiees32Liste?.length) return resultats.equipesQualifiees32Liste;
-    const derived = deriveList32FromOfficialKo(resultats);
     return derived.length ? derived : [];
   }
 
@@ -460,6 +481,7 @@
     parseIntSafe,
     normalizeTeam,
     deriveList32FromOfficialKo,
+    countCompleteKoPairings,
     getList32Real,
     matchOutcome,
     getEtape,

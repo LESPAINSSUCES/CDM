@@ -329,6 +329,10 @@ input[type="number"].stat-in { width: 2.1rem; text-align: center; padding: .35re
 
     <div id="panel-bonus" class="org-panel card">
       <h2>Réponses bonus officielles</h2>
+      <p class="hint">Bonus poules : calcul auto depuis les 72 matchs (0-0, nations à 9 pts, meilleure attaque). Vous pouvez corriger à la main — le recalcul auto ne remplace pas une valeur saisie manuellement.</p>
+      <div class="actions" style="margin-bottom:.75rem">
+        <button type="button" class="btn" id="btn-recalc-bonus-poules">Recalculer bonus poules (auto)</button>
+      </div>
       <div id="bonus-root"></div>
       <div class="reset-bar">
         <div class="actions">
@@ -589,9 +593,14 @@ function syncOrgBonusOther(key) {
 
 function commitOrgBonusField(key) {
   state.bonus[key] = resolvedOrgBonusValue(key);
+  if (BONUS_POULES_MANUAL_KEYS.includes(key)) {
+    if (!state.bonusManual) state.bonusManual = {};
+    state.bonusManual[key] = true;
+  }
 }
 
 const BONUS_POULES_KEYS = ['meilleureAttaque', 'matchs00', 'nationsA9pts', 'nbCSC'];
+const BONUS_POULES_MANUAL_KEYS = ['meilleureAttaque', 'matchs00', 'nationsA9pts'];
 const BONUS_COMP_KEYS = ['meilleurButeur', 'meilleurJoueur', 'meilleurGardien', 'nbButs', 'nbCartonsRouges', 'nbProlongations'];
 const RESET_TYPED = 'VIDER';
 
@@ -807,13 +816,45 @@ function computePoulesBonusStats() {
   return { matchs00, nationsA9, meilleureAttaque, groupsComplete };
 }
 
-function syncPoulesBonusFields() {
+function syncPoulesBonusFields(forceAuto) {
   const stats = computePoulesBonusStats();
-  state.bonus.matchs00 = String(stats.matchs00);
+  const manual = state.bonusManual || {};
+  if (forceAuto || !manual.matchs00) state.bonus.matchs00 = String(stats.matchs00);
   if (stats.groupsComplete === 12) {
-    state.bonus.nationsA9pts = String(stats.nationsA9);
-    if (stats.meilleureAttaque) state.bonus.meilleureAttaque = stats.meilleureAttaque;
+    if (forceAuto || !manual.nationsA9pts) state.bonus.nationsA9pts = String(stats.nationsA9);
+    if (stats.meilleureAttaque && (forceAuto || !manual.meilleureAttaque)) {
+      state.bonus.meilleureAttaque = stats.meilleureAttaque;
+    }
   }
+}
+
+function ensureBonusPoulesKeys() {
+  if (!state.bonus) state.bonus = {};
+  const stats = computePoulesBonusStats();
+  if (!('matchs00' in state.bonus)) state.bonus.matchs00 = String(stats.matchs00);
+  if (stats.groupsComplete === 12) {
+    if (!('nationsA9pts' in state.bonus)) state.bonus.nationsA9pts = String(stats.nationsA9);
+    if (!('meilleureAttaque' in state.bonus) && stats.meilleureAttaque) {
+      state.bonus.meilleureAttaque = stats.meilleureAttaque;
+    }
+  }
+}
+
+function recalcBonusPoulesAuto() {
+  if (!state.bonusManual) state.bonusManual = {};
+  BONUS_POULES_MANUAL_KEYS.forEach((k) => { delete state.bonusManual[k]; });
+  syncPoulesBonusFields(true);
+  renderBonus();
+  showMsg('Bonus poules recalculés depuis les matchs poules.');
+}
+
+function countOfficialR32Pairings() {
+  let n = 0;
+  for (let m = 73; m <= 88; m++) {
+    const [home, away] = getKoTeams(m);
+    if (home && away) n++;
+  }
+  return n;
 }
 
 function groupLetter(title) {
@@ -1027,6 +1068,7 @@ function syncDerivedFields(opts = {}) {
   }
   const eng = engineCache;
   const fifaList32 = list32FromOfficialKoMatchups();
+  const r32PairingsComplete = countOfficialR32Pairings() >= 16;
   const hasOfficialKo = fifaList32.length > 0;
 
   if (hasOfficialKo) {
@@ -1049,7 +1091,9 @@ function syncDerivedFields(opts = {}) {
     const third = koWinnerFromScores(103);
     const prev = state.phaseFinalePourBareme || {};
     let liste32;
-    if (hasOfficialKo) {
+    if (r32PairingsComplete && fifaList32.length) {
+      liste32 = [...fifaList32];
+    } else if (hasOfficialKo) {
       liste32 = [...fifaList32];
     } else if (eng.list32.length === 32) {
       liste32 = [...eng.list32];
@@ -1068,6 +1112,7 @@ function syncDerivedFields(opts = {}) {
   }
 
   syncBonusFromMatchStats();
+  ensureBonusPoulesKeys();
   updateMatchStatsBars();
   updateBaremeStatusBar();
 }
@@ -1555,6 +1600,7 @@ function resetKoTableau(cascadeScores) {
 function resetBonusKeys(keys) {
   if (!state.bonus) state.bonus = {};
   keys.forEach(k => { delete state.bonus[k]; });
+  if (state.bonusManual) keys.forEach(k => { delete state.bonusManual[k]; });
 }
 
 async function runReset(action) {
@@ -2096,6 +2142,7 @@ function commitKoRow(mid, home, away, row, syncAll) {
 function renderBonus() {
   const root = document.getElementById('bonus-root');
   root.innerHTML = '';
+  const pouleStats = computePoulesBonusStats();
   BONUS_FIELDS.forEach(f => {
     const row = document.createElement('div');
     row.className = 'bonus-row';
@@ -2120,6 +2167,18 @@ function renderBonus() {
       statHint = `<p class="hint" style="margin:.25rem 0 0">Somme CR par match (M1–M104) : <strong>${sumAllCartonsRouges()}</strong> — recalculée à la publication.</p>`;
     } else if (f.key === 'nbButs') {
       statHint = `<p class="hint" style="margin:.25rem 0 0">Buts des matchs publiés (M1–M104) : <strong>${sumAllGoals()}</strong> — recalculé à la publication si &gt; 0.</p>`;
+    } else if (f.key === 'matchs00') {
+      statHint = `<p class="hint" style="margin:.25rem 0 0">Calcul auto (poules) : <strong>${pouleStats.matchs00}</strong> match(s) 0-0${state.bonusManual?.matchs00 ? ' · valeur manuelle conservée' : ''}</p>`;
+    } else if (f.key === 'nationsA9pts') {
+      const autoHint = pouleStats.groupsComplete === 12
+        ? `<strong>${pouleStats.nationsA9}</strong> nation(s)`
+        : 'en attente des 12 groupes complets';
+      statHint = `<p class="hint" style="margin:.25rem 0 0">Calcul auto : ${autoHint}${state.bonusManual?.nationsA9pts ? ' · valeur manuelle conservée' : ''}</p>`;
+    } else if (f.key === 'meilleureAttaque') {
+      const autoHint = pouleStats.groupsComplete === 12 && pouleStats.meilleureAttaque
+        ? `<strong>${escapeAttr(pouleStats.meilleureAttaque)}</strong>`
+        : 'en attente des 12 groupes complets';
+      statHint = `<p class="hint" style="margin:.25rem 0 0">Calcul auto : ${autoHint}${state.bonusManual?.meilleureAttaque ? ' · valeur manuelle conservée' : ''}</p>`;
     }
     row.innerHTML = `<label>${f.label}</label>${input}${statHint}`;
     root.appendChild(row);
@@ -2140,6 +2199,7 @@ function renderBonus() {
 
 function buildExportJson() {
   syncDerivedFields();
+  ensureBonusPoulesKeys();
   ['meilleurButeur', 'meilleurJoueur', 'meilleurGardien'].forEach(k => commitOrgBonusField(k));
   state.etapeDebloquee = draftEtape;
   state.meta = state.meta || {};
@@ -2333,6 +2393,7 @@ document.getElementById('import-overlay').addEventListener('click', e => {
 });
 document.getElementById('btn-reset-ko-tableau').addEventListener('click', () => runReset('ko-tableau'));
 document.getElementById('btn-reset-ko-scores-all').addEventListener('click', () => runReset('ko-scores-all'));
+document.getElementById('btn-recalc-bonus-poules').addEventListener('click', recalcBonusPoulesAuto);
 document.getElementById('btn-reset-bonus-poules').addEventListener('click', () => runReset('bonus-poules'));
 document.getElementById('btn-reset-bonus-comp').addEventListener('click', () => runReset('bonus-comp'));
 document.getElementById('btn-reset-bonus-all').addEventListener('click', () => runReset('bonus-all'));

@@ -1,7 +1,7 @@
 {
   "meta": {
     "misAJour": "2026-06-28",
-    "note": "Mis à jour via organisateur.html"
+    "note": "Mis à jour via patch_resultats_once.js (list32 KO + bonus poules)"
   },
   "etapeDebloquee": 3,
   "matchs": {
@@ -609,7 +609,7 @@
     "Paraguay",
     "Pays-Bas",
     "Portugal",
-    "RDC",
+    "RD Congo",
     "Sénégal",
     "Suède",
     "Suisse"
@@ -645,7 +645,7 @@
     },
     "80": {
       "home": "Angleterre",
-      "away": "RDC"
+      "away": "RD Congo"
     },
     "81": {
       "home": "États-Unis",
@@ -840,7 +840,7 @@
       "Paraguay",
       "Pays-Bas",
       "Portugal",
-      "RDC",
+      "RD Congo",
       "Sénégal",
       "Suède",
       "Suisse"
