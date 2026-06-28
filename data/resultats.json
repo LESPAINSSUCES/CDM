@@ -1,7 +1,7 @@
 {
   "meta": {
     "misAJour": "2026-06-28",
-    "note": "Mis à jour via patch_resultats_once.js (list32 KO + bonus poules)"
+    "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 3,
   "matchs": {
@@ -775,7 +775,7 @@
     },
     "M80": {
       "left": "Angleterre",
-      "right": "RDC"
+      "right": "RD Congo"
     },
     "M81": {
       "left": "États-Unis",
@@ -866,5 +866,6 @@
     "nationsA9pts": "3",
     "meilleureAttaque": "France"
   },
-  "heuresCoupEnvoiKo": {}
+  "heuresCoupEnvoiKo": {},
+  "bonusManual": {}
 }
