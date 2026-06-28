@@ -2197,6 +2197,28 @@ function renderBonus() {
   });
 }
 
+function findKoDrawsWithoutWinner() {
+  const missing = [];
+  for (let m = 73; m <= 104; m++) {
+    const [home, away] = getKoTeams(m);
+    if (!home || !away) continue;
+    const sc = getKoScore(m);
+    const h = parseScore(sc.scoreHome);
+    const a = parseScore(sc.scoreAway);
+    if (!Number.isFinite(h) || !Number.isFinite(a) || h !== a) continue;
+    if (!koWinnerFromScores(m)) missing.push(m);
+  }
+  return missing;
+}
+
+function validateKoBeforeExport() {
+  const missing = findKoDrawsWithoutWinner();
+  if (!missing.length) return true;
+  showMsg(`Match(s) KO à égalité sans qualifié TAB : M${missing.join(', M')}. Cliquez le vainqueur aux TAB avant publication.`, true);
+  switchPanel('ko-scores');
+  return false;
+}
+
 function buildExportJson() {
   syncDerivedFields();
   ensureBonusPoulesKeys();
@@ -2259,6 +2281,7 @@ function showMsg(text, isErr) {
 }
 
 function downloadJson() {
+  if (!validateKoBeforeExport()) return;
   const blob = new Blob([buildExportJson()], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -2274,6 +2297,7 @@ async function publishToGitHub() {
     goToTokenSetup();
     return;
   }
+  if (!validateKoBeforeExport()) return;
   try {
     showMsg('Publication en cours…');
     const content = buildExportJson();

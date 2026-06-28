@@ -255,6 +255,26 @@ nav .tab-link.active { color: var(--gold); border-color: var(--gold); }
   vertical-align: middle;
   opacity: .9;
 }
+.tv-sb-name-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .1rem;
+  vertical-align: middle;
+}
+.tv-sb-team.away .tv-sb-name-block { align-items: flex-end; }
+.team-form-line {
+  display: flex;
+  gap: .2rem;
+  font-family: 'DM Mono', monospace;
+  font-size: .52rem;
+  letter-spacing: .08em;
+  line-height: 1;
+  opacity: .92;
+}
+.team-form-V { color: #6ee7a0; }
+.team-form-N { color: #94a3b8; }
+.team-form-D { color: #f87171; }
 .tv-sb-team.is-fifa-favorite .team-fifa-rank { color: var(--gold-light); }
 .tv-sb-team.is-fifa-favorite .tv-sb-name { color: var(--gold-light); }
 
@@ -2326,8 +2346,12 @@ body.grille-remote-locked #player-code-input {
         <input type="checkbox" id="poule-votes-toggle" checked>
         <span>Votes Pain sucés</span>
       </label>
+      <label class="fifa-hints-toggle">
+        <input type="checkbox" id="team-form-toggle" checked>
+        <span>Forme CDM</span>
+      </label>
     </div>
-    <span>Pronostics des inscrits : <strong style="color:var(--text)">domicile · nul · extérieur</strong> (sur le total inscrits). Indices FIFA : <strong style="color:var(--gold-light)">#</strong> classement mondial.</span>
+    <span>Pronostics des inscrits : <strong style="color:var(--text)">domicile · nul · extérieur</strong> (sur le total inscrits). Indices FIFA : <strong style="color:var(--gold-light)">#</strong> classement · Forme : <strong style="color:var(--text)">V N D</strong> (résultats officiels publiés).</span>
   </div>
   <div class="incomplete-banner" id="poules-banner"><div class="dot" id="poules-dot"></div><span id="poules-banner-text">Touchez un chiffre pour chaque équipe (0–4, ou Plus pour 5+)</span></div>
   <div class="progress-bar"><div class="progress-fill" id="poules-progress" style="width:0%"></div></div>
@@ -2587,6 +2611,7 @@ body.grille-remote-locked #player-code-input {
 <script src="js/league-bar.js?v=9"></script>
 <script src="js/supabase-api.js"></script>
 <script src="js/fifa-rankings.js"></script>
+<script src="js/team-form.js"></script>
 <script src="js/poule-votes.js"></script>
 <script src="js/worldcup26-api.js?v=4"></script>
 <script src="js/scoring.js?v=8"></script>
@@ -2673,26 +2698,46 @@ function setFifaHintsEnabled(on) {
   refreshAllTeamLabels();
 }
 
-function teamLabelHtml(name, side, size) {
+function teamFormEnabled() {
+  try {
+    const raw = localStorage.getItem(TEAM_FORM_LS);
+    if (raw === null) return true;
+    return raw === '1';
+  } catch (e) {
+    return true;
+  }
+}
+
+function setTeamFormEnabled(on) {
+  try { localStorage.setItem(TEAM_FORM_LS, on ? '1' : '0'); } catch (e) { /* ignore */ }
+  refreshAllTeamLabels();
+}
+
+function teamLabelHtml(name, side, size, beforeMatchNum) {
   const flag = teamFlagImg(name, size);
   const label = escapeHtml(name);
   const rank = fifaHintsEnabled() ? window.CDM_FIFA?.getRank(name) : null;
   const rankHtml = rank != null
     ? `<span class="team-fifa-rank" title="${escapeAttr(window.CDM_FIFA_RANKS?.label || 'Classement FIFA')}">#${rank}</span>`
     : '';
-  if (!flag) return label + rankHtml;
-  if (side === 'away') return `<span class="tv-sb-name">${label}</span>${rankHtml}${flag}`;
-  return `${flag}<span class="tv-sb-name">${label}</span>${rankHtml}`;
+  const formHtml = teamFormEnabled() && window.CDM_TEAM_FORM?.formHtml
+    ? CDM_TEAM_FORM.formHtml(name, OFFICIAL, beforeMatchNum)
+    : '';
+  const nameBlock = `<span class="tv-sb-name-block"><span class="tv-sb-name">${label}</span>${rankHtml}${formHtml}</span>`;
+  if (!flag) return nameBlock;
+  if (side === 'away') return `${nameBlock}${flag}`;
+  return `${flag}${nameBlock}`;
 }
 
 function refreshTeamLabelsOnBoard(board) {
   if (!board) return;
   const home = board.dataset.home;
   const away = board.dataset.away;
+  const beforeMatchNum = board.dataset.beforeMatch ? Number(board.dataset.beforeMatch) : undefined;
   const homeEl = board.querySelector('.tv-sb-team.home');
   const awayEl = board.querySelector('.tv-sb-team.away');
-  if (homeEl) homeEl.innerHTML = teamLabelHtml(home, 'home', 'md');
-  if (awayEl) awayEl.innerHTML = teamLabelHtml(away, 'away', 'md');
+  if (homeEl) homeEl.innerHTML = teamLabelHtml(home, 'home', 'md', beforeMatchNum);
+  if (awayEl) awayEl.innerHTML = teamLabelHtml(away, 'away', 'md', beforeMatchNum);
   applyFifaFavoriteHighlight(board);
 }
 
@@ -2716,9 +2761,15 @@ function applyFifaFavoriteHighlight(rootEl) {
 
 function wireFifaHintsToggle() {
   const el = document.getElementById('fifa-hints-toggle');
-  if (!el) return;
-  el.checked = fifaHintsEnabled();
-  el.addEventListener('change', () => setFifaHintsEnabled(el.checked));
+  if (el) {
+    el.checked = fifaHintsEnabled();
+    el.addEventListener('change', () => setFifaHintsEnabled(el.checked));
+  }
+  const formEl = document.getElementById('team-form-toggle');
+  if (formEl) {
+    formEl.checked = teamFormEnabled();
+    formEl.addEventListener('change', () => setTeamFormEnabled(formEl.checked));
+  }
 }
 
 const POULE_VOTES_LS = 'cdm2026_poule_votes';
@@ -2823,6 +2874,7 @@ function applyLeagueBadge() {
 const kosWinners = {};
 const LS_KEY = 'cdm2026_grid';
 const FIFA_HINTS_LS = 'cdm2026_fifa_hints';
+const TEAM_FORM_LS = 'cdm2026_team_form';
 const scoreValues = {};
 const QUICK_SCORES = [0, 1, 2, 3, 4];
 const MORE_SCORES = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
@@ -3809,6 +3861,29 @@ function applyKoFromScores(mid) {
   else delete kosWinners[mid];
 }
 
+function syncKoTieBreakOnCard(card, mid, teamA, teamB, matchEditable) {
+  if (!card) return;
+  card.querySelector('.ko-tie-break')?.remove();
+  const hVal = parseScoreVal(getScoreRaw(koInputId(mid, 'h')));
+  const aVal = parseScoreVal(getScoreRaw(koInputId(mid, 'a')));
+  const isDraw = !!(teamA && teamB && matchEditable
+    && Number.isFinite(hVal) && Number.isFinite(aVal) && hVal === aVal);
+  if (!isDraw) return;
+  const pick = kosWinners[mid];
+  const tie = document.createElement('div');
+  tie.className = 'ko-tie-break';
+  tie.innerHTML = '<span class="ko-tie-label">Score nul — qui passe ?</span><div class="ko-tie-btns"></div>';
+  [teamA, teamB].forEach(t => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ko-tie-btn' + (pick === t ? ' selected' : '');
+    b.innerHTML = teamFlagImg(t, 'sm') + escapeHtml(t);
+    b.addEventListener('click', () => pickKoTieWinner(mid, t));
+    tie.querySelector('.ko-tie-btns').appendChild(b);
+  });
+  card.appendChild(tie);
+}
+
 function pickKoTieWinner(mid, team) {
   if (!isKoMidEditable(mid)) return;
   kosWinners[mid] === team ? delete kosWinners[mid] : (kosWinners[mid] = team);
@@ -3834,7 +3909,6 @@ function createOfficialScoreCard(mid) {
   const aVal = parseScoreVal(a);
   const ready = !!(teamA && teamB);
   const bothScores = Number.isFinite(hVal) && Number.isFinite(aVal);
-  const isDraw = ready && bothScores && hVal === aVal && matchEditable;
   let activeWinner = null;
   if (ready && bothScores) {
     if (hVal > aVal) activeWinner = teamA;
@@ -3851,7 +3925,7 @@ function createOfficialScoreCard(mid) {
     const kickLbl = CDM_WC26.formatKickoffParis(kickIso);
     if (kickLbl) html += `<p class="ko-wait-msg" style="margin:.25rem 0 0">Coup d'envoi : ${escapeHtml(kickLbl)}</p>`;
   }
-  html += buildScoreboardHTML('display-km' + mid, teamA || '—', teamB || '—', h, a);
+  html += buildScoreboardHTML('display-km' + mid, teamA || '—', teamB || '—', h, a, mid);
   if (ready) {
     if (matchEditable) html += buildTvScoreRow(koInputId(mid, 'h'), koInputId(mid, 'a'), 'group', teamA, teamB);
     else html += `<p class="ko-wait-msg">${escapeHtml(lockReason || 'Consultation seule.')}</p>`;
@@ -3860,20 +3934,7 @@ function createOfficialScoreCard(mid) {
   }
   el.innerHTML = html;
   updateScoreboardEl(el.querySelector('#display-km' + mid), h, a, activeWinner === teamA && !!activeWinner, activeWinner === teamB && !!activeWinner);
-  if (isDraw) {
-    const tie = document.createElement('div');
-    tie.className = 'ko-tie-break';
-    tie.innerHTML = '<span class="ko-tie-label">Score nul — qui passe ?</span><div class="ko-tie-btns"></div>';
-    [teamA, teamB].forEach(t => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'ko-tie-btn' + (pick === t ? ' selected' : '');
-      b.innerHTML = teamFlagImg(t, 'sm') + escapeHtml(t);
-      b.addEventListener('click', () => pickKoTieWinner(mid, t));
-      tie.querySelector('.ko-tie-btns').appendChild(b);
-    });
-    el.appendChild(tie);
-  }
+  syncKoTieBreakOnCard(el, mid, teamA, teamB, matchEditable);
   return el;
 }
 
@@ -4379,6 +4440,7 @@ async function loadOfficialResultats() {
     }
   } catch (e) { /* offline / file:// */ }
   await loadKoKickoffs();
+  refreshAllTeamLabels();
 }
 
 // ─── TAB SWITCHING ───────────────────────────────────────────────────────────
@@ -4429,16 +4491,17 @@ function formatDisplayScore(h, a) {
   return formatScoreLabel(h) + ' : ' + formatScoreLabel(a);
 }
 
-function buildScoreboardHTML(id, home, away, hVal = '', aVal = '') {
+function buildScoreboardHTML(id, home, away, hVal = '', aVal = '', beforeMatchNum = '') {
   const empty = hVal === '' && aVal === '';
-  return `<div class="tv-scoreboard${empty ? ' empty' : ''}" id="${id}" data-home="${escapeAttr(home)}" data-away="${escapeAttr(away)}">
-    <span class="tv-sb-team home">${teamLabelHtml(home, 'home', 'md')}</span>
+  const bm = beforeMatchNum !== '' && beforeMatchNum != null ? String(beforeMatchNum) : '';
+  return `<div class="tv-scoreboard${empty ? ' empty' : ''}" id="${id}" data-home="${escapeAttr(home)}" data-away="${escapeAttr(away)}"${bm ? ` data-before-match="${bm}"` : ''}>
+    <span class="tv-sb-team home">${teamLabelHtml(home, 'home', 'md', bm ? Number(bm) : undefined)}</span>
     <div class="tv-sb-center">
       <span class="tv-sb-num tv-sb-home">${formatScoreLabel(hVal)}</span>
       <span class="tv-sb-sep">:</span>
       <span class="tv-sb-num tv-sb-away">${formatScoreLabel(aVal)}</span>
   </div>
-    <span class="tv-sb-team away">${teamLabelHtml(away, 'away', 'md')}</span>
+    <span class="tv-sb-team away">${teamLabelHtml(away, 'away', 'md', bm ? Number(bm) : undefined)}</span>
   </div>`;
 }
 
@@ -4531,6 +4594,8 @@ function updateKoMatchDisplay(mid) {
   if (!card) return;
   card.classList.toggle('has-score', both);
   card.classList.toggle('partial', (h !== '' || a !== '') && !both);
+  const matchEditable = isKoMidEditable(mid);
+  syncKoTieBreakOnCard(card, mid, teamA, teamB, matchEditable);
 }
 
 function setScore(inputId, value) {
@@ -4688,7 +4753,7 @@ function buildGroups() {
       const keyA = `m${num}-a`;
       row.innerHTML = `
         <div class="tv-board match-card incomplete" data-match="${num}" data-home="${escapeAttr(home)}" data-away="${escapeAttr(away)}">
-          ${buildScoreboardHTML('display-m' + num, home, away)}
+          ${buildScoreboardHTML('display-m' + num, home, away, '', '', num)}
           ${buildTvScoreRow(keyH, keyA, 'group', home, away)}
           ${buildPouleVotesLineHtml(num, home, away)}
         </div>`;
