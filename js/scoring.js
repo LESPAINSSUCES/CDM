@@ -9,6 +9,9 @@
   const TABLEAU_ETAPE = 2;
   const KO_MATCH_MIN = 73;
   const KO_MATCH_MAX = 104;
+  const KO_SCORE_EXACT_PTS = 7;
+  const KO_WINNER_PTS = 6;
+  const KO_MATCH_MAX_PTS = KO_SCORE_EXACT_PTS + KO_WINNER_PTS;
 
   const BONUS_DEFS = [
     { id: 'b1', key: 'meilleureAttaque', unlock: 'poules', label: 'Meilleure attaque (poules)', pts: 25 },
@@ -246,57 +249,80 @@
     return pts;
   }
 
-  function scoreEliminationKO(participant, resultats, etapeOverride) {
+  function getKoPredWinner(participant, mid, predWinners, predSc) {
+    const key = 'Match ' + mid;
+    const explicit = predWinners[mid] || predWinners[key] || predWinners[String(mid)] || predWinners['M' + mid]
+      || predSc?.vainqueur || '';
+    if (normalizeTeam(explicit)) return explicit;
+    const ph = parseIntSafe(predSc?.scoreHome);
+    const pa = parseIntSafe(predSc?.scoreAway);
+    if (ph == null || pa == null || ph === pa) return '';
+    if (ph > pa) return predSc?.home || '';
+    return predSc?.away || '';
+  }
+
+  function evalKoMatchBreakdown(participant, mid, resultats, etapeOverride) {
     const etape = getEtape(resultats, etapeOverride);
-    const predWinners = participant.vainqueursTableauEliminationChoisis || participant.kosWinners || {};
+    const midEtape = koMidEtape(mid);
+    if (midEtape == null || midEtape > etape) {
+      return { status: 'pending', scorePts: 0, winnerPts: 0, totalPts: 0, exact: false, winnerHit: false };
+    }
+    const key = 'Match ' + mid;
     const realWinners = resultats.vainqueursTableauElimination || {};
-    const realScores = resultats.scoresElimination || {};
+    const realW = realWinners[key] || realWinners[String(mid)] || realWinners['M' + mid] || '';
+    if (!realW) {
+      return { status: 'pending', scorePts: 0, winnerPts: 0, totalPts: 0, exact: false, winnerHit: false };
+    }
+    const predWinners = participant.vainqueursTableauEliminationChoisis || participant.kosWinners || {};
+    const scReal = (resultats.scoresElimination || {})[key] || resultats.scoresElimination?.[String(mid)] || resultats.scoresElimination?.['M' + mid];
+    const predSc = participant.scoresElimination?.[key] || participant.scoresElimination?.[String(mid)] || participant.matchs?.[key];
+    const predW = getKoPredWinner(participant, mid, predWinners, predSc);
+    let exact = false;
+    if (scReal && parseIntSafe(scReal.scoreHome) != null && parseIntSafe(scReal.scoreAway) != null) {
+      const ph = parseIntSafe(predSc?.scoreHome);
+      const pa = parseIntSafe(predSc?.scoreAway);
+      exact = ph != null && pa != null
+        && ph === parseIntSafe(scReal.scoreHome)
+        && pa === parseIntSafe(scReal.scoreAway);
+    }
+    const winnerHit = !!(normalizeTeam(predW) && normalizeTeam(predW) === normalizeTeam(realW));
+    const scorePts = exact ? KO_SCORE_EXACT_PTS : 0;
+    const winnerPts = winnerHit ? KO_WINNER_PTS : 0;
+    const totalPts = scorePts + winnerPts;
+    return {
+      status: totalPts > 0 ? 'hit' : 'miss',
+      scorePts,
+      winnerPts,
+      totalPts,
+      exact,
+      winnerHit,
+    };
+  }
+
+  function scoreEliminationKO(participant, resultats, etapeOverride) {
     let pts = 0;
     for (let m = KO_MATCH_MIN; m <= KO_MATCH_MAX; m++) {
-      const midEtape = koMidEtape(m);
-      if (midEtape == null || midEtape > etape) continue;
-      const key = 'Match ' + m;
-      const realW = realWinners[key] || realWinners[String(m)] || realWinners['M' + m] || '';
-      if (!realW) continue;
-      const predW = predWinners[m] || predWinners[key] || predWinners[String(m)] || predWinners['M' + m] || '';
-      const scReal = realScores[key] || realScores[String(m)] || realScores['M' + m];
-      if (scReal && parseIntSafe(scReal.scoreHome) != null && parseIntSafe(scReal.scoreAway) != null) {
-        const predSc = participant.scoresElimination?.[key] || participant.scoresElimination?.[String(m)] || participant.matchs?.[key];
-        const ph = parseIntSafe(predSc?.scoreHome);
-        const pa = parseIntSafe(predSc?.scoreAway);
-        if (ph != null && pa != null && ph === parseIntSafe(scReal.scoreHome) && pa === parseIntSafe(scReal.scoreAway)) {
-          pts += 10;
-          continue;
-        }
-      }
-      if (normalizeTeam(predW) && normalizeTeam(predW) === normalizeTeam(realW)) pts += 6;
+      const b = evalKoMatchBreakdown(participant, m, resultats, etapeOverride);
+      if (b.status === 'hit') pts += b.totalPts;
     }
     return pts;
   }
 
   function evalKoMatchDetail(participant, mid, resultats, etapeOverride) {
-    const etape = getEtape(resultats, etapeOverride);
-    const midEtape = koMidEtape(mid);
-    if (midEtape == null || midEtape > etape) return { status: 'pending', pts: 0 };
-    const key = 'Match ' + mid;
-    const realWinners = resultats.vainqueursTableauElimination || {};
-    const realW = realWinners[key] || realWinners[String(mid)] || realWinners['M' + mid] || '';
-    if (!realW) return { status: 'pending', pts: 0 };
-    const predWinners = participant.vainqueursTableauEliminationChoisis || {};
-    const predW = predWinners[mid] || predWinners[key] || predWinners[String(mid)] || '';
-    const scReal = (resultats.scoresElimination || {})[key] || resultats.scoresElimination?.[String(mid)];
-    const predSc = participant.scoresElimination?.[key] || participant.scoresElimination?.[String(mid)];
-    if (scReal && parseIntSafe(scReal.scoreHome) != null && parseIntSafe(scReal.scoreAway) != null) {
-      const ph = parseIntSafe(predSc?.scoreHome);
-      const pa = parseIntSafe(predSc?.scoreAway);
-      if (ph != null && pa != null && ph === parseIntSafe(scReal.scoreHome) && pa === parseIntSafe(scReal.scoreAway)) {
-        return { status: 'hit', pts: 10, kind: 'exact' };
-      }
-    }
-    if (normalizeTeam(predW) && normalizeTeam(predW) === normalizeTeam(realW)) {
-      return { status: 'hit', pts: 6, kind: 'winner' };
-    }
-    return { status: 'miss', pts: 0 };
+    const b = evalKoMatchBreakdown(participant, mid, resultats, etapeOverride);
+    if (b.status === 'pending') return { status: 'pending', pts: 0 };
+    if (b.status === 'miss') return { status: 'miss', pts: 0 };
+    let kind = 'winner';
+    if (b.exact && b.winnerHit) kind = 'both';
+    else if (b.exact) kind = 'exact';
+    else if (b.winnerHit) kind = 'winner';
+    return {
+      status: 'hit',
+      pts: b.totalPts,
+      kind,
+      scorePts: b.scorePts,
+      winnerPts: b.winnerPts,
+    };
   }
 
   function evalBonusItem(key, predVal, resultats, etapeOverride) {
@@ -478,6 +504,10 @@
     KO_ETAPE_DEFS,
     KO_MATCH_MIN,
     KO_MATCH_MAX,
+    KO_SCORE_EXACT_PTS,
+    KO_WINNER_PTS,
+    KO_MATCH_MAX_PTS,
+    evalKoMatchBreakdown,
     parseIntSafe,
     normalizeTeam,
     deriveList32FromOfficialKo,

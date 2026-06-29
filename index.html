@@ -2571,16 +2571,16 @@ body.grille-remote-locked #player-code-input {
 
     <div class="rule-section">
       <h3>Étapes 3 à 7 — Scores à élimination directe</h3>
-      <p style="margin-bottom:.75rem;font-size:.85rem;color:var(--muted)">Scores après 90 min, débloqués après chaque tour réel. Vous pouvez récupérer des points même si votre tableau (étape 2) était incorrect.</p>
+      <p style="margin-bottom:.75rem;font-size:.85rem;color:var(--muted)">Scores après 90 min (temps réglementaire), débloqués après chaque tour réel. En cas de nul, indiquez <strong>qui passe aux TAB</strong>. Vous pouvez récupérer des points même si votre tableau (étape 2) était incorrect.</p>
       <table class="points-table">
         <tr><th>Étape</th><th>Matchs</th><th>Deadline</th><th>Points</th></tr>
-        <tr><td>3 — Seizièmes</td><td>16</td><td>28/06/2026</td><td class="pts-val">10 exact · 6 vainqueur</td></tr>
-        <tr><td>4 — Huitièmes</td><td>8</td><td>04/07/2026</td><td class="pts-val">idem</td></tr>
-        <tr><td>5 — Quarts</td><td>4</td><td>09/07/2026</td><td class="pts-val">idem</td></tr>
-        <tr><td>6 — Demi-finales</td><td>2</td><td>14/07/2026</td><td class="pts-val">idem</td></tr>
-        <tr><td>7 — Finale + 3ᵉ place</td><td>2</td><td>18/07/2026</td><td class="pts-val">idem</td></tr>
+        <tr><td>3 — Seizièmes</td><td>16</td><td>28/06/2026</td><td class="pts-val" rowspan="5">7 score exact · 6 qualifié · max 13</td></tr>
+        <tr><td>4 — Huitièmes</td><td>8</td><td>04/07/2026</td></tr>
+        <tr><td>5 — Quarts</td><td>4</td><td>09/07/2026</td></tr>
+        <tr><td>6 — Demi-finales</td><td>2</td><td>14/07/2026</td></tr>
+        <tr><td>7 — Finale + 3ᵉ place</td><td>2</td><td>18/07/2026</td></tr>
       </table>
-      <p style="margin-top:.75rem; color:var(--muted); font-size:.83rem">🔥 <strong style="color:var(--text)">Bonus prolifique</strong> : ×1,5 si 4–5 buts · ×2 si 6+ buts</p>
+      <p style="margin-top:.75rem; color:var(--muted); font-size:.83rem">Score exact et qualifié sont <strong style="color:var(--text)">cumulables</strong> (ex. 1-1 exact + bon TAB = 13 pts · 1-1 exact + mauvais TAB = 7 pts).</p>
     </div>
 
     <div class="rule-section">
@@ -2614,7 +2614,7 @@ body.grille-remote-locked #player-code-input {
 <script src="js/team-form.js"></script>
 <script src="js/poule-votes.js"></script>
 <script src="js/worldcup26-api.js?v=4"></script>
-<script src="js/scoring.js?v=8"></script>
+<script src="js/scoring.js?v=9"></script>
 <script>
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const NATIONS = [

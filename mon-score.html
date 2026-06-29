@@ -198,7 +198,7 @@ nav .tab-link.active { color: var(--gold); border-color: var(--gold); }
 <script src="js/leagues.js?v=9"></script>
 <script src="js/league-bar.js?v=9"></script>
 <script src="js/supabase-api.js"></script>
-<script src="js/scoring.js?v=8"></script>
+<script src="js/scoring.js?v=9"></script>
 <script>
 const GROUPS = {
   "Groupe A": [[1,"Mexique","Afrique du Sud"],[2,"Corée du Sud","Rép. Tchèque"],[25,"Rép. Tchèque","Afrique du Sud"],[28,"Mexique","Corée du Sud"],[53,"Rép. Tchèque","Mexique"],[54,"Afrique du Sud","Corée du Sud"]],
@@ -230,6 +230,12 @@ function escapeHtml(s) {
 function fmtScore(h, a) {
   if (h == null || a == null) return '—';
   return h + ' – ' + a;
+}
+
+function formatKoPtsBadge(d) {
+  if (d.kind === 'exact') return `+${d.pts} score`;
+  if (d.kind === 'winner') return `+${d.pts} qual.`;
+  return `+${d.pts}`;
 }
 
 function formatPouleMatchSub(d, ph, pa, rh, ra) {
@@ -352,7 +358,7 @@ function renderFinalesSection(participant, resultats) {
         || resultats.vainqueursTableauElimination?.[String(m)] || '—';
       secPts += d.pts;
       const hitCls = d.status === 'hit' ? ' pred-hit' : '';
-      const badge = d.status === 'hit' ? `<span class="pred-pts-badge">+${d.pts}${d.kind === 'exact' ? ' exact' : ''}</span>` : '';
+      const badge = d.status === 'hit' ? `<span class="pred-pts-badge">${formatKoPtsBadge(d)}</span>` : '';
       const predNote = pred.hasPred
         ? `<small>Prono ${pred.ph != null && pred.pa != null ? pred.ph + '–' + pred.pa : (pred.predW || '—')} · </small>`
         : '';
