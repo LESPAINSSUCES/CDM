@@ -196,6 +196,49 @@ function bracketSides(mid, R32_SIDE, etape2Pick) {
   return ['', ''];
 }
 
+function agentPickKoWinner(home, away, etape2PickMid) {
+  if (!home || !away) return '';
+  const pick = etape2PickMid;
+  if (pick === home || pick === away) return pick;
+  const favorites = ['Argentine', 'France', 'Brésil', 'Allemagne', 'Mexique', 'États-Unis', 'Espagne', 'Angleterre', 'Portugal'];
+  for (const f of favorites) {
+    if (home === f || away === f) return f;
+  }
+  return home;
+}
+
+/** Scores KO M73–M88 sur affiches officielles (resultats.json), pronos agent — pas les scores réels. */
+function applyOfficialKoFixtures(grille, official) {
+  const meo = official?.matchsEliminationOfficiels || {};
+  const etape2Pick = grille.etape2Pick || {};
+  const vainqueurs = { ...(grille.vainqueursTableauEliminationChoisis || {}) };
+  const scores = { ...(grille.scoresElimination || {}) };
+
+  for (let m = 73; m <= 88; m++) {
+    const pair = meo[String(m)] || meo['M' + m];
+    const home = pair?.home || '';
+    const away = pair?.away || '';
+    if (!home || !away) continue;
+    const w = agentPickKoWinner(home, away, etape2Pick[String(m)] || etape2Pick[m]);
+    if (!w) continue;
+    vainqueurs[String(m)] = w;
+    etape2Pick[String(m)] = w;
+    scores['Match ' + m] = scoreForWinner(home, away, w);
+  }
+
+  grille.etape2Pick = Object.fromEntries(
+    Object.entries(etape2Pick).map(([k, v]) => [String(k), v])
+  );
+  grille.vainqueursTableauEliminationChoisis = vainqueurs;
+  grille.scoresElimination = scores;
+  return grille;
+}
+
+function loadOfficialResultats(rootDir) {
+  const p = path.join(rootDir, 'data', 'resultats.json');
+  return JSON.parse(fs.readFileSync(p, 'utf8'));
+}
+
 function pickWinner(home, away, favoredTeam) {
   if (!home || !away) return '';
   if (favoredTeam && (home === favoredTeam || away === favoredTeam)) return favoredTeam;
@@ -316,4 +359,13 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { deriveTableau, normalizePouleMatchFixtures, buildEngine, GROUPS, KNOCK_R32_DEF };
+module.exports = {
+  deriveTableau,
+  normalizePouleMatchFixtures,
+  buildEngine,
+  applyOfficialKoFixtures,
+  agentPickKoWinner,
+  loadOfficialResultats,
+  GROUPS,
+  KNOCK_R32_DEF,
+};
