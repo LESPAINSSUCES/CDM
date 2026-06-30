@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-06-28",
+    "misAJour": "2026-06-30",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 3,
@@ -684,12 +684,12 @@
       "away": ""
     },
     "90": {
-      "home": "",
-      "away": ""
+      "home": "Canada",
+      "away": "Maroc"
     },
     "91": {
-      "home": "",
-      "away": ""
+      "home": "Brésil",
+      "away": "Norvège"
     },
     "92": {
       "home": "",
@@ -845,20 +845,83 @@
       "Suède",
       "Suisse"
     ],
-    "vainqueursSeiziemePourHuitiemes16": [],
+    "vainqueursSeiziemePourHuitiemes16": [
+      "Canada",
+      "Paraguay",
+      "Maroc",
+      "Brésil",
+      "France",
+      "Norvège"
+    ],
     "vainqueursHuitiemesPourQuarts8": [],
     "vainqueursQuartsPourDemis4": [],
     "finalistesChoisis": [],
     "troisiemePlaceChoix": "",
     "vainqueurFinal": ""
   },
-  "vainqueursTableauElimination": {},
-  "scoresElimination": {},
+  "vainqueursTableauElimination": {
+    "73": "Canada",
+    "74": "Paraguay",
+    "75": "Maroc",
+    "76": "Brésil",
+    "77": "France",
+    "78": "Norvège"
+  },
+  "scoresElimination": {
+    "Match 73": {
+      "home": "Afrique du Sud",
+      "away": "Canada",
+      "scoreHome": "0",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 74": {
+      "home": "Allemagne",
+      "away": "Paraguay",
+      "scoreHome": "1",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 75": {
+      "home": "Pays-Bas",
+      "away": "Maroc",
+      "scoreHome": "1",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 76": {
+      "home": "Brésil",
+      "away": "Japon",
+      "scoreHome": "2",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 77": {
+      "home": "France",
+      "away": "Suède",
+      "scoreHome": "3",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 78": {
+      "home": "Côte d'Ivoire",
+      "away": "Norvège",
+      "scoreHome": "1",
+      "scoreAway": "2",
+      "csc": "",
+      "cartonsRouges": ""
+    }
+  },
   "bonus": {
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "215",
+    "nbButs": "229",
     "nbCartonsRouges": "10",
     "nbProlongations": "4",
     "nbCSC": "10",
@@ -866,6 +929,39 @@
     "nationsA9pts": "3",
     "meilleureAttaque": "France"
   },
-  "heuresCoupEnvoiKo": {},
+  "heuresCoupEnvoiKo": {
+    "73": "2026-06-28T19:00:00.000Z",
+    "74": "2026-06-29T20:30:00.000Z",
+    "75": "2026-06-30T01:00:00.000Z",
+    "76": "2026-06-29T17:00:00.000Z",
+    "77": "2026-06-30T21:00:00.000Z",
+    "78": "2026-06-30T17:00:00.000Z",
+    "79": "2026-07-01T01:00:00.000Z",
+    "80": "2026-07-01T16:00:00.000Z",
+    "81": "2026-07-02T00:00:00.000Z",
+    "82": "2026-07-01T17:00:00.000Z",
+    "83": "2026-07-02T23:00:00.000Z",
+    "84": "2026-07-02T19:00:00.000Z",
+    "85": "2026-07-03T03:00:00.000Z",
+    "86": "2026-07-03T22:00:00.000Z",
+    "87": "2026-07-04T01:30:00.000Z",
+    "88": "2026-07-03T18:00:00.000Z",
+    "89": "2026-07-04T21:00:00.000Z",
+    "90": "2026-07-04T17:00:00.000Z",
+    "91": "2026-07-05T20:00:00.000Z",
+    "92": "2026-07-06T00:00:00.000Z",
+    "93": "2026-07-06T19:00:00.000Z",
+    "94": "2026-07-06T21:00:00.000Z",
+    "95": "2026-07-07T16:00:00.000Z",
+    "96": "2026-07-07T20:00:00.000Z",
+    "97": "2026-07-09T20:00:00.000Z",
+    "98": "2026-07-10T19:00:00.000Z",
+    "99": "2026-07-11T21:00:00.000Z",
+    "100": "2026-07-12T01:00:00.000Z",
+    "101": "2026-07-14T19:00:00.000Z",
+    "102": "2026-07-15T19:00:00.000Z",
+    "103": "2026-07-18T21:00:00.000Z",
+    "104": "2026-07-19T19:00:00.000Z"
+  },
   "bonusManual": {}
 }
