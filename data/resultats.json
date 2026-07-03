@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-06-30",
+    "misAJour": "2026-07-03",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 3,
@@ -851,7 +851,14 @@
       "Maroc",
       "Brésil",
       "France",
-      "Norvège"
+      "Norvège",
+      "Mexique",
+      "Angleterre",
+      "États-Unis",
+      "Belgique",
+      "Portugal",
+      "Espagne",
+      "Suisse"
     ],
     "vainqueursHuitiemesPourQuarts8": [],
     "vainqueursQuartsPourDemis4": [],
@@ -865,7 +872,14 @@
     "75": "Maroc",
     "76": "Brésil",
     "77": "France",
-    "78": "Norvège"
+    "78": "Norvège",
+    "79": "Mexique",
+    "80": "Angleterre",
+    "81": "États-Unis",
+    "82": "Belgique",
+    "83": "Portugal",
+    "84": "Espagne",
+    "85": "Suisse"
   },
   "scoresElimination": {
     "Match 73": {
@@ -915,13 +929,69 @@
       "scoreAway": "2",
       "csc": "",
       "cartonsRouges": ""
+    },
+    "Match 79": {
+      "home": "Mexique",
+      "away": "Équateur",
+      "scoreHome": "2",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 80": {
+      "home": "Angleterre",
+      "away": "RD Congo",
+      "scoreHome": "2",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 81": {
+      "home": "États-Unis",
+      "away": "Bosnie Herzégovine",
+      "scoreHome": "2",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 82": {
+      "home": "Belgique",
+      "away": "Sénégal",
+      "scoreHome": "3",
+      "scoreAway": "2",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 83": {
+      "home": "Portugal",
+      "away": "Croatie",
+      "scoreHome": "2",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 84": {
+      "home": "Espagne",
+      "away": "Autriche",
+      "scoreHome": "3",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 85": {
+      "home": "Suisse",
+      "away": "Algérie",
+      "scoreHome": "2",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     }
   },
   "bonus": {
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "229",
+    "nbButs": "249",
     "nbCartonsRouges": "10",
     "nbProlongations": "4",
     "nbCSC": "10",
