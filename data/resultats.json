@@ -1,9 +1,9 @@
 {
   "meta": {
-    "misAJour": "2026-07-03",
+    "misAJour": "2026-07-04",
     "note": "Mis à jour via organisateur.html"
   },
-  "etapeDebloquee": 3,
+  "etapeDebloquee": 4,
   "matchs": {
     "Match 1": {
       "home": "Mexique",
@@ -704,12 +704,12 @@
       "away": "Belgique"
     },
     "95": {
-      "home": "",
-      "away": ""
+      "home": "Argentine",
+      "away": "Égypte"
     },
     "96": {
-      "home": "",
-      "away": ""
+      "home": "Suisse",
+      "away": "Colombie"
     },
     "97": {
       "home": "",
@@ -858,7 +858,10 @@
       "Belgique",
       "Portugal",
       "Espagne",
-      "Suisse"
+      "Suisse",
+      "Argentine",
+      "Colombie",
+      "Égypte"
     ],
     "vainqueursHuitiemesPourQuarts8": [],
     "vainqueursQuartsPourDemis4": [],
@@ -879,7 +882,10 @@
     "82": "Belgique",
     "83": "Portugal",
     "84": "Espagne",
-    "85": "Suisse"
+    "85": "Suisse",
+    "86": "Argentine",
+    "87": "Colombie",
+    "88": "Égypte"
   },
   "scoresElimination": {
     "Match 73": {
@@ -985,13 +991,37 @@
       "scoreAway": "0",
       "csc": "",
       "cartonsRouges": ""
+    },
+    "Match 86": {
+      "home": "Argentine",
+      "away": "Cap Vert",
+      "scoreHome": "3",
+      "scoreAway": "2",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 87": {
+      "home": "Colombie",
+      "away": "Ghana",
+      "scoreHome": "1",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 88": {
+      "home": "Australie",
+      "away": "Égypte",
+      "scoreHome": "1",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     }
   },
   "bonus": {
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "249",
+    "nbButs": "257",
     "nbCartonsRouges": "10",
     "nbProlongations": "4",
     "nbCSC": "10",
