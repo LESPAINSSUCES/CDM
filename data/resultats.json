@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-07-04",
+    "misAJour": "2026-07-06",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 4,
@@ -863,7 +863,12 @@
       "Colombie",
       "Égypte"
     ],
-    "vainqueursHuitiemesPourQuarts8": [],
+    "vainqueursHuitiemesPourQuarts8": [
+      "France",
+      "Maroc",
+      "Norvège",
+      "Angleterre"
+    ],
     "vainqueursQuartsPourDemis4": [],
     "finalistesChoisis": [],
     "troisiemePlaceChoix": "",
@@ -885,7 +890,11 @@
     "85": "Suisse",
     "86": "Argentine",
     "87": "Colombie",
-    "88": "Égypte"
+    "88": "Égypte",
+    "89": "France",
+    "90": "Maroc",
+    "91": "Norvège",
+    "92": "Angleterre"
   },
   "scoresElimination": {
     "Match 73": {
@@ -1015,13 +1024,45 @@
       "scoreAway": "1",
       "csc": "",
       "cartonsRouges": ""
+    },
+    "Match 89": {
+      "home": "Paraguay",
+      "away": "France",
+      "scoreHome": "0",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 90": {
+      "home": "Canada",
+      "away": "Maroc",
+      "scoreHome": "0",
+      "scoreAway": "3",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 91": {
+      "home": "Brésil",
+      "away": "Norvège",
+      "scoreHome": "1",
+      "scoreAway": "2",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 92": {
+      "home": "Mexique",
+      "away": "Angleterre",
+      "scoreHome": "2",
+      "scoreAway": "3",
+      "csc": "",
+      "cartonsRouges": ""
     }
   },
   "bonus": {
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "257",
+    "nbButs": "269",
     "nbCartonsRouges": "10",
     "nbProlongations": "4",
     "nbCSC": "10",
