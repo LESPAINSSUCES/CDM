@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-07-06",
+    "misAJour": "2026-07-07",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 4,
@@ -867,7 +867,9 @@
       "France",
       "Maroc",
       "Norvège",
-      "Angleterre"
+      "Angleterre",
+      "Espagne",
+      "Belgique"
     ],
     "vainqueursQuartsPourDemis4": [],
     "finalistesChoisis": [],
@@ -894,7 +896,9 @@
     "89": "France",
     "90": "Maroc",
     "91": "Norvège",
-    "92": "Angleterre"
+    "92": "Angleterre",
+    "93": "Espagne",
+    "94": "Belgique"
   },
   "scoresElimination": {
     "Match 73": {
@@ -1056,13 +1060,29 @@
       "scoreAway": "3",
       "csc": "",
       "cartonsRouges": ""
+    },
+    "Match 93": {
+      "home": "Portugal",
+      "away": "Espagne",
+      "scoreHome": "0",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 94": {
+      "home": "États-Unis",
+      "away": "Belgique",
+      "scoreHome": "1",
+      "scoreAway": "4",
+      "csc": "",
+      "cartonsRouges": ""
     }
   },
   "bonus": {
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "269",
+    "nbButs": "275",
     "nbCartonsRouges": "10",
     "nbProlongations": "4",
     "nbCSC": "10",
