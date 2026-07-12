@@ -875,7 +875,9 @@
     ],
     "vainqueursQuartsPourDemis4": [
       "France",
-      "Espagne"
+      "Espagne",
+      "Angleterre",
+      "Argentine"
     ],
     "finalistesChoisis": [],
     "troisiemePlaceChoix": "",
@@ -907,7 +909,9 @@
     "95": "Argentine",
     "96": "Suisse",
     "97": "France",
-    "98": "Espagne"
+    "98": "Espagne",
+    "99": "Angleterre",
+    "100": "Argentine"
   },
   "scoresElimination": {
     "Match 73": {
@@ -1117,13 +1121,29 @@
       "scoreAway": "1",
       "csc": "",
       "cartonsRouges": ""
+    },
+    "Match 99": {
+      "home": "Norvège",
+      "away": "Angleterre",
+      "scoreHome": "1",
+      "scoreAway": "2",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 100": {
+      "home": "Argentine",
+      "away": "Suisse",
+      "scoreHome": "3",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     }
   },
   "bonus": {
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "285",
+    "nbButs": "292",
     "nbCartonsRouges": "10",
     "nbProlongations": "4",
     "nbCSC": "10",
