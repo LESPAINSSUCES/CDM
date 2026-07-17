@@ -1,9 +1,9 @@
 {
   "meta": {
-    "misAJour": "2026-07-12",
+    "misAJour": "2026-07-17",
     "note": "Mis à jour via organisateur.html"
   },
-  "etapeDebloquee": 6,
+  "etapeDebloquee": 7,
   "matchs": {
     "Match 1": {
       "home": "Mexique",
@@ -879,7 +879,10 @@
       "Angleterre",
       "Argentine"
     ],
-    "finalistesChoisis": [],
+    "finalistesChoisis": [
+      "Espagne",
+      "Argentine"
+    ],
     "troisiemePlaceChoix": "",
     "vainqueurFinal": ""
   },
@@ -911,7 +914,9 @@
     "97": "France",
     "98": "Espagne",
     "99": "Angleterre",
-    "100": "Argentine"
+    "100": "Argentine",
+    "101": "Espagne",
+    "102": "Argentine"
   },
   "scoresElimination": {
     "Match 73": {
@@ -1137,13 +1142,29 @@
       "scoreAway": "1",
       "csc": "",
       "cartonsRouges": ""
+    },
+    "Match 101": {
+      "home": "France",
+      "away": "Espagne",
+      "scoreHome": "0",
+      "scoreAway": "2",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 102": {
+      "home": "Angleterre",
+      "away": "Argentine",
+      "scoreHome": "1",
+      "scoreAway": "2",
+      "csc": "",
+      "cartonsRouges": ""
     }
   },
   "bonus": {
     "meilleurButeur": "K. Mbappé",
     "meilleurJoueur": "L. Messi",
     "meilleurGardien": "E. Martínez",
-    "nbButs": "292",
+    "nbButs": "297",
     "nbCartonsRouges": "10",
     "nbProlongations": "4",
     "nbCSC": "10",
