@@ -1179,16 +1179,16 @@
     }
   },
   "bonus": {
-    "meilleurButeur": "K. Mbappé",
-    "meilleurJoueur": "rodri",
-    "meilleurGardien": "U. Simon",
-    "nbButs": "308",
-    "nbCartonsRouges": "10",
-    "nbProlongations": "4",
     "nbCSC": "10",
     "matchs00": "7",
     "nationsA9pts": "3",
-    "meilleureAttaque": "France"
+    "meilleureAttaque": "France",
+    "meilleurButeur": "K. Mbappé",
+    "meilleurJoueur": "Rodri",
+    "meilleurGardien": "U. Simon",
+    "nbButs": "308",
+    "nbCartonsRouges": "10",
+    "nbProlongations": ""
   },
   "heuresCoupEnvoiKo": {
     "73": "2026-06-28T19:00:00.000Z",
