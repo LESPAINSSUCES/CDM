@@ -1,7 +1,7 @@
 {
   "meta": {
-    "misAJour": "2026-06-27",
-    "note": "Synchronisé FIFA worldcup26.ir — 66/72 matchs poule"
+    "misAJour": "2026-07-20",
+    "note": "Synchronisé FIFA worldcup26.ir — 72/72 matchs poule"
   },
   "etapeDebloquee": 3,
   "matchs": {
@@ -472,14 +472,18 @@
     "Match 71": {
       "home": "Jordanie",
       "away": "Argentine",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "1",
+      "scoreAway": "3",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 72": {
       "home": "Algérie",
       "away": "Autriche",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "3",
+      "scoreAway": "3",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 21": {
       "home": "Portugal",
@@ -516,14 +520,18 @@
     "Match 69": {
       "home": "Colombie",
       "away": "Portugal",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "0",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 70": {
       "home": "RD Congo",
       "away": "Ouzbékistan",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "3",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 22": {
       "home": "Angleterre",
@@ -560,14 +568,18 @@
     "Match 67": {
       "home": "Panama",
       "away": "Angleterre",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "0",
+      "scoreAway": "2",
+      "csc": "",
+      "cartonsRouges": ""
     },
     "Match 68": {
       "home": "Croatie",
       "away": "Ghana",
-      "scoreHome": "",
-      "scoreAway": ""
+      "scoreHome": "2",
+      "scoreAway": "1",
+      "csc": "",
+      "cartonsRouges": ""
     }
   },
   "equipesQualifiees32Liste": [
@@ -584,23 +596,23 @@
     "Côte d'Ivoire",
     "Norvège",
     "Mexique",
-    "Écosse",
+    "Équateur",
     "Angleterre",
-    "Sénégal",
+    "RD Congo",
     "États-Unis",
     "Bosnie Herzégovine",
     "Belgique",
     "Corée du Sud",
     "Portugal",
-    "Ghana",
+    "Croatie",
     "Espagne",
     "Autriche",
     "Suisse",
-    "Iran",
+    "Algérie",
     "Argentine",
     "Cap Vert",
     "Colombie",
-    "Équateur",
+    "Ghana",
     "Australie",
     "Égypte"
   ],
@@ -631,11 +643,11 @@
     },
     "79": {
       "home": "Mexique",
-      "away": "Écosse"
+      "away": "Équateur"
     },
     "80": {
       "home": "Angleterre",
-      "away": "Sénégal"
+      "away": "RD Congo"
     },
     "81": {
       "home": "États-Unis",
@@ -647,7 +659,7 @@
     },
     "83": {
       "home": "Portugal",
-      "away": "Ghana"
+      "away": "Croatie"
     },
     "84": {
       "home": "Espagne",
@@ -655,7 +667,7 @@
     },
     "85": {
       "home": "Suisse",
-      "away": "Iran"
+      "away": "Algérie"
     },
     "86": {
       "home": "Argentine",
@@ -663,7 +675,7 @@
     },
     "87": {
       "home": "Colombie",
-      "away": "Équateur"
+      "away": "Ghana"
     },
     "88": {
       "home": "Australie",
@@ -761,11 +773,11 @@
     },
     "M79": {
       "left": "Mexique",
-      "right": "Écosse"
+      "right": "Équateur"
     },
     "M80": {
       "left": "Angleterre",
-      "right": "Sénégal"
+      "right": "RD Congo"
     },
     "M81": {
       "left": "États-Unis",
@@ -777,7 +789,7 @@
     },
     "M83": {
       "left": "Portugal",
-      "right": "Ghana"
+      "right": "Croatie"
     },
     "M84": {
       "left": "Espagne",
@@ -785,7 +797,7 @@
     },
     "M85": {
       "left": "Suisse",
-      "right": "Iran"
+      "right": "Algérie"
     },
     "M86": {
       "left": "Argentine",
@@ -793,7 +805,7 @@
     },
     "M87": {
       "left": "Colombie",
-      "right": "Équateur"
+      "right": "Ghana"
     },
     "M88": {
       "left": "Australie",
@@ -815,23 +827,23 @@
       "Côte d'Ivoire",
       "Norvège",
       "Mexique",
-      "Écosse",
+      "Équateur",
       "Angleterre",
-      "Sénégal",
+      "RD Congo",
       "États-Unis",
       "Bosnie Herzégovine",
       "Belgique",
       "Corée du Sud",
       "Portugal",
-      "Ghana",
+      "Croatie",
       "Espagne",
       "Autriche",
       "Suisse",
-      "Iran",
+      "Algérie",
       "Argentine",
       "Cap Vert",
       "Colombie",
-      "Équateur",
+      "Ghana",
       "Australie",
       "Égypte"
     ],
