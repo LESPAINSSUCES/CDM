@@ -1,6 +1,6 @@
 {
   "meta": {
-    "misAJour": "2026-07-17",
+    "misAJour": "2026-07-20",
     "note": "Mis à jour via organisateur.html"
   },
   "etapeDebloquee": 7,
@@ -883,8 +883,8 @@
       "Espagne",
       "Argentine"
     ],
-    "troisiemePlaceChoix": "",
-    "vainqueurFinal": ""
+    "troisiemePlaceChoix": "Angleterre",
+    "vainqueurFinal": "Espagne"
   },
   "vainqueursTableauElimination": {
     "73": "Canada",
@@ -916,7 +916,9 @@
     "99": "Angleterre",
     "100": "Argentine",
     "101": "Espagne",
-    "102": "Argentine"
+    "102": "Argentine",
+    "103": "Angleterre",
+    "104": "Espagne"
   },
   "scoresElimination": {
     "Match 73": {
@@ -1158,13 +1160,29 @@
       "scoreAway": "2",
       "csc": "",
       "cartonsRouges": ""
+    },
+    "Match 103": {
+      "home": "France",
+      "away": "Angleterre",
+      "scoreHome": "4",
+      "scoreAway": "6",
+      "csc": "",
+      "cartonsRouges": ""
+    },
+    "Match 104": {
+      "home": "Espagne",
+      "away": "Argentine",
+      "scoreHome": "1",
+      "scoreAway": "0",
+      "csc": "",
+      "cartonsRouges": ""
     }
   },
   "bonus": {
     "meilleurButeur": "K. Mbappé",
-    "meilleurJoueur": "L. Messi",
-    "meilleurGardien": "E. Martínez",
-    "nbButs": "297",
+    "meilleurJoueur": "rodri",
+    "meilleurGardien": "U. Simon",
+    "nbButs": "308",
     "nbCartonsRouges": "10",
     "nbProlongations": "4",
     "nbCSC": "10",
